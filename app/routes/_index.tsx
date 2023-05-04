@@ -23,7 +23,7 @@ const contentStyle: React.CSSProperties = {
   textAlign: 'center',
   margin: '10px',
   padding: '10px',
-  color: '#fff',
+  color: 'black',
   backgroundColor: 'white',
 };
 
