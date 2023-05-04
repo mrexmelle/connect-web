@@ -8,7 +8,7 @@ interface Profile {
 }
 
 export default function AccountsMe() {
-  const [profile, getProfile] = useState<Profile>({
+  const [profile, setProfile] = useState<Profile>({
     name: "",
     ehid: "",
     dob: ""
@@ -16,24 +16,22 @@ export default function AccountsMe() {
 
   useEffect(() => {
     fetchProfile()
-  })
+  }, [])
 
   function fetchProfile() {
+    axios.defaults.withCredentials = true
     axios.get(
-      'http://localhost:8080/accounts/me/profile',
-      {
-        withCredentials: true
-      }
+      'http://localhost:8080/accounts/me/profile'
     ).then(
-      function (response) {
-        getProfile(response.data)
+      (response) => {
+        setProfile(response.data)
       }
     )
   }
 
   return (
     <main>
-      <h1>Hi {profile.name} with DOB {profile.dob}</h1>
+      <h1>Hi {profile.name}</h1>
     </main>
   );
 }

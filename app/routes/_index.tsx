@@ -45,6 +45,7 @@ export default function Index() {
   }
 
   function Login() {
+    axios.defaults.withCredentials = true
     axios.post(
       'http://localhost:8080/sessions',
       {
@@ -52,8 +53,8 @@ export default function Index() {
         password: password
       }
     ).then(
-      function (response) {
-        navigate("/accounts/me")
+      (response) => {
+        navigate('/accounts/me')
       }
     )
   }
