@@ -1,8 +1,10 @@
-import type { V2_MetaFunction } from "@remix-run/node";
+import { type V2_MetaFunction } from "@remix-run/node";
 import { Button, Input, Row, Col, Layout } from "antd";
 import { KeyOutlined, UserOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { ChangeEvent, useState } from "react";
+import { useNavigate } from "@remix-run/react";
+
 
 export const meta: V2_MetaFunction = () => {
   return [{ title: "Connect Web" }];
@@ -32,6 +34,7 @@ const rowStyle: React.CSSProperties = {
 export default function Index() {
   const [employeeId, setEmployeeId] = useState("")
   const [password, setPassword] = useState("")
+  const navigate = useNavigate()
 
   function onEmployeeIdChange(e: ChangeEvent<HTMLInputElement>) {
     setEmployeeId(e.target.value)
@@ -50,7 +53,7 @@ export default function Index() {
       }
     ).then(
       function (response) {
-        console.log(response)
+        navigate("/accounts/me")
       }
     )
   }
