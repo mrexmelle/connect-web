@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 interface Profile {
   name: String,
   ehid: String,
+  employeeId: String,
   dob: String
 }
 
@@ -48,16 +49,16 @@ const profileTableColumns = [
     dataIndex: 'ehid'
   },
   {
+    title: 'Employee ID',
+    dataIndex: 'employeeId'
+  },
+  {
     title: 'Date of Birth',
     dataIndex: 'dob'
   }
 ]
 
 const tenureTableColumns = [
-  {
-    title: 'Employee ID',
-    dataIndex: 'employeeId'
-  },
   {
     title: 'Start Date',
     dataIndex: 'startDate'
@@ -76,6 +77,7 @@ export default function AccountsMe() {
   const [profile, setProfile] = useState<Profile>({
     name: "",
     ehid: "",
+    employeeId: "",
     dob: ""
   })
   const [tenureData, setTenureData] = useState<TenureData>({
@@ -115,7 +117,7 @@ export default function AccountsMe() {
       <Layout.Header style={headerStyle}> Connect Web </Layout.Header>
       <Layout.Content style={contentStyle}>
         <Row>
-          <Col span={12}>
+          <Col span={24}>
             <h1>Profile</h1>
             <Table
               pagination={false}
