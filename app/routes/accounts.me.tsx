@@ -15,12 +15,27 @@ interface Tenure {
   employeeId: String,
   startDate: String,
   endDate: String,
-  employmentType: String
+  employmentType: String,
+  ohid: String,
+  organizationName: String
 }
 
 interface TenureData {
   ehid: String,
   tenures: Tenure[]
+}
+
+interface Organization {
+  id: String,
+  ohid: String,
+  parentId: String,
+  name: String,
+  leadEhid: String
+}
+
+interface OrganizationDto {
+  organization: Organization,
+  status: String
 }
 
 const headerStyle: React.CSSProperties = {
@@ -70,6 +85,10 @@ const tenureTableColumns = [
   {
     title: 'Employment Type',
     dataIndex: 'employmentType'
+  },
+  {
+    title: 'Organization',
+    dataIndex: 'organizationName'
   }
 ]
 
@@ -92,7 +111,7 @@ export default function AccountsMe() {
 
   function fetchProfile() {
     axios.defaults.withCredentials = true
-    axios.get(
+    axios.get<Profile>(
       'http://localhost:8080/accounts/me/profile'
     ).then(
       (response) => {
@@ -103,11 +122,21 @@ export default function AccountsMe() {
 
   function fetchTenures() {
     axios.defaults.withCredentials = true
-    axios.get(
+    axios.get<TenureData>(
       'http://localhost:8080/accounts/me/tenures'
     ).then(
       (response) => {
-        setTenureData(response.data)
+        const orgRequests = response.data.tenures.map((t) => {
+          return axios.get<OrganizationDto>('http://localhost:8080/organizations/'+t.ohid)
+        })
+
+        Promise.all(orgRequests).then((r) => {
+          r.map((t, idx) => {
+            response.data.tenures[idx].organizationName = t.data.organization.name
+          })
+          setTenureData(response.data)
+        })
+        
       }
     )
   }
@@ -122,6 +151,7 @@ export default function AccountsMe() {
             <Table
               pagination={false}
               columns={profileTableColumns}
+              rowKey="ehid"
               dataSource={[profile]} />
           </Col>
         </Row>
@@ -132,6 +162,7 @@ export default function AccountsMe() {
             <Table
               pagination={false}
               columns={tenureTableColumns}
+              rowKey="id"
               dataSource={tenureData.tenures} />
           </Col>
         </Row>
