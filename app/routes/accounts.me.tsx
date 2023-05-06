@@ -3,38 +3,43 @@ import { Row, Col, Layout, Card, Descriptions, Divider, List, Table } from "antd
 import axios from "axios";
 import { useEffect, useState } from "react"
 
-interface Profile {
+interface ProfileEntity {
   name: String,
   ehid: String,
   employeeId: String,
+  emailAddress: String,
   dob: String
 }
 
-interface Tenure {
+interface ProfileDto {
+  profile: ProfileEntity,
+  status: String
+}
+
+interface TenureEntity {
   id: Number,
   employeeId: String,
   startDate: String,
   endDate: String,
   employmentType: String,
-  ohid: String,
+  organizationId: String,
   organizationName: String
 }
 
-interface TenureData {
-  ehid: String,
-  tenures: Tenure[]
+interface TenureDto {
+  tenures: TenureEntity[],
+  status: String
 }
 
-interface Organization {
+interface OrganizationEntity {
   id: String,
-  ohid: String,
-  parentId: String,
+  hierarchy: String,
   name: String,
   leadEhid: String
 }
 
 interface OrganizationDto {
-  organization: Organization,
+  organization: OrganizationEntity,
   status: String
 }
 
@@ -68,6 +73,10 @@ const profileTableColumns = [
     dataIndex: 'employeeId'
   },
   {
+    title: 'Email Address',
+    dataIndex: 'emailAddress'
+  },
+  {
     title: 'Date of Birth',
     dataIndex: 'dob'
   }
@@ -93,15 +102,19 @@ const tenureTableColumns = [
 ]
 
 export default function AccountsMe() {
-  const [profile, setProfile] = useState<Profile>({
-    name: "",
-    ehid: "",
-    employeeId: "",
-    dob: ""
+  const [profileDto, setProfileDto] = useState<ProfileDto>({
+    profile: {
+      name: "",
+      ehid: "",
+      employeeId: "",
+      emailAddress: "",
+      dob: ""
+    },
+    status: ""
   })
-  const [tenureData, setTenureData] = useState<TenureData>({
-    ehid: "",
-    tenures: []
+  const [tenureDto, setTenureDto] = useState<TenureDto>({
+    tenures: [],
+    status: ""
   })
 
   useEffect(() => {
@@ -111,30 +124,30 @@ export default function AccountsMe() {
 
   function fetchProfile() {
     axios.defaults.withCredentials = true
-    axios.get<Profile>(
+    axios.get<ProfileDto>(
       'http://localhost:8080/accounts/me/profile'
     ).then(
       (response) => {
-        setProfile(response.data)
+        setProfileDto(response.data)
       }
     )
   }
 
   function fetchTenures() {
     axios.defaults.withCredentials = true
-    axios.get<TenureData>(
+    axios.get<TenureDto>(
       'http://localhost:8080/accounts/me/tenures'
     ).then(
       (response) => {
         const orgRequests = response.data.tenures.map((t) => {
-          return axios.get<OrganizationDto>('http://localhost:8080/organizations/'+t.ohid)
+          return axios.get<OrganizationDto>('http://localhost:8080/organizations/'+t.organizationId)
         })
 
         Promise.all(orgRequests).then((r) => {
           r.map((t, idx) => {
             response.data.tenures[idx].organizationName = t.data.organization.name
           })
-          setTenureData(response.data)
+          setTenureDto(response.data)
         })
         
       }
@@ -152,7 +165,7 @@ export default function AccountsMe() {
               pagination={false}
               columns={profileTableColumns}
               rowKey="ehid"
-              dataSource={[profile]} />
+              dataSource={[profileDto.profile]} />
           </Col>
         </Row>
         <Divider />
@@ -163,7 +176,7 @@ export default function AccountsMe() {
               pagination={false}
               columns={tenureTableColumns}
               rowKey="id"
-              dataSource={tenureData.tenures} />
+              dataSource={tenureDto.tenures} />
           </Col>
         </Row>
       </Layout.Content>
