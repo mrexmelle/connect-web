@@ -1,5 +1,5 @@
-import { AlignCenterOutlined } from "@ant-design/icons";
-import { Row, Col, Layout, Card, Descriptions, Divider, List, Table } from "antd";
+import { AlignCenterOutlined, ApartmentOutlined, ArrowLeftOutlined, KeyOutlined, PieChartOutlined, UserOutlined } from "@ant-design/icons";
+import { Row, Col, Layout, Divider, List, Table, Menu, Button, Collapse } from "antd";
 import axios from "axios";
 import { useEffect, useState } from "react"
 
@@ -59,6 +59,11 @@ const contentStyle: React.CSSProperties = {
   backgroundColor: 'white',
 };
 
+const siderStyle: React.CSSProperties = {
+  height: '32 px',
+  margin: '16 px'
+}
+
 const profileTableColumns = [
   {
     title: 'Name',
@@ -101,6 +106,19 @@ const tenureTableColumns = [
   }
 ]
 
+const siderItems= [
+  {
+    key: '1',
+    icon: <UserOutlined />,
+    label: 'My Profile'
+  },
+  {
+    key: '2',
+    icon: <ApartmentOutlined />,
+    label: 'Organizations'
+  }
+]
+
 export default function AccountsMe() {
   const [profileDto, setProfileDto] = useState<ProfileDto>({
     profile: {
@@ -112,10 +130,13 @@ export default function AccountsMe() {
     },
     status: ""
   })
+  
   const [tenureDto, setTenureDto] = useState<TenureDto>({
     tenures: [],
     status: ""
   })
+
+  const [siderCollapsed, setSiderCollapsed] = useState<boolean>(false);
 
   useEffect(() => {
     fetchProfile()
@@ -155,8 +176,14 @@ export default function AccountsMe() {
   }
 
   return (
-    <Layout>
-      <Layout.Header style={headerStyle}> Connect Web </Layout.Header>
+    <Layout style={{ minHeight: "100vh" }}>
+      <Layout.Sider collapsible theme="light" style={siderStyle}
+        collapsed={siderCollapsed}
+        onCollapse={(value) => setSiderCollapsed(value)} >
+        <Menu items={siderItems} mode="inline" defaultSelectedKeys={['1']}/>
+        <Collapse expandIcon={({ isActive }) => isActive ? <ArrowLeftOutlined /> : <KeyOutlined />} />
+      </Layout.Sider>
+      <Layout>
       <Layout.Content style={contentStyle}>
         <Row>
           <Col span={24}>
@@ -180,6 +207,10 @@ export default function AccountsMe() {
           </Col>
         </Row>
       </Layout.Content>
+      <Layout.Footer style={{ textAlign: 'center' }}>
+        Astro Technologies Indonesia ©2023
+      </Layout.Footer>
+      </Layout>
     </Layout>
   );
 }
