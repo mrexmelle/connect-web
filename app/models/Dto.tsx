@@ -1,16 +1,21 @@
-import { OrganizationEntity, ProfileEntity, TenureEntity } from "./Entity"
+import { OrganizationEntity, OrganizationMemberEntity, ProfileEntity, TenureEntity } from "./Entity"
 
 export interface OrganizationDto {
   organization: OrganizationEntity,
-  status: String
+  status: string
 }
 
 export interface ProfileDto {
   profile: ProfileEntity,
-  status: String
+  status: string
 }
 
 export interface TenureDto {
   tenures: TenureEntity[],
-  status: String
+  status: string
+}
+
+export interface OrganizationMemberDto {
+  members: OrganizationMemberEntity[],
+  status: string
 }

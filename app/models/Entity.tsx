@@ -1,25 +1,38 @@
 
 export interface OrganizationEntity {
-    id: String,
-    hierarchy: String,
-    name: String,
-    leadEhid: String
+    id: string,
+    hierarchy: string,
+    name: string,
+    leadEhid: string,
+    emailAddress: string
 }
 
 export interface ProfileEntity {
-    name: String,
-    ehid: String,
-    employeeId: String,
-    emailAddress: String,
-    dob: String
+    name: string,
+    ehid: string,
+    employeeId: string,
+    emailAddress: string,
+    dob: string
 }
 
 export interface TenureEntity {
-    id: Number,
-    employeeId: String,
-    startDate: String,
-    endDate: String,
-    employmentType: String,
-    organizationId: String,
-    organizationName: String
+    id: number,
+    employeeId: string,
+    startDate: string,
+    endDate: string,
+    employmentType: string,
+    organizationId: string,
+    titleGrade: string,
+    titleName: string,
+    organizationName: string
+}
+
+export interface OrganizationMemberEntity {
+    ehid: string,
+    employeeId: string,
+    name: string,
+    emailAddress: string,
+    titleName: string,
+    isLead: string,
+    organizationRole: string
 }

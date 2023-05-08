@@ -1,10 +1,10 @@
 import { Row, Col, Layout, Divider, Table } from "antd";
-import axios from "axios";
-import { useEffect, useState } from "react"
-import { OrganizationDto, ProfileDto, TenureDto } from "~/models/Dto";
+import { ProfileDto, TenureDto } from "~/models/Dto";
 
 interface Props {
-  style: React.CSSProperties
+  style: React.CSSProperties,
+  profileDto: ProfileDto,
+  tenureDto: TenureDto
 }
 
 const profileTableColumns = [
@@ -46,62 +46,14 @@ const tenureTableColumns = [
   {
     title: 'Organization',
     dataIndex: 'organizationName'
+  },
+  {
+    title: 'Title',
+    dataIndex: 'titleName'
   }
 ]
 
-export default function ({style}: Props) {
-  const [profileDto, setProfileDto] = useState<ProfileDto>({
-    profile: {
-      name: "",
-      ehid: "",
-      employeeId: "",
-      emailAddress: "",
-      dob: ""
-    },
-    status: ""
-  })
-  
-  const [tenureDto, setTenureDto] = useState<TenureDto>({
-    tenures: [],
-    status: ""
-  })
-
-  useEffect(() => {
-    fetchProfile()
-    fetchTenures()
-  }, [])
-
-  function fetchProfile() {
-    axios.defaults.withCredentials = true
-    axios.get<ProfileDto>(
-      'http://localhost:8080/accounts/me/profile'
-    ).then(
-      (response) => {
-        setProfileDto(response.data)
-      }
-    )
-  }
-
-  function fetchTenures() {
-    axios.defaults.withCredentials = true
-    axios.get<TenureDto>(
-      'http://localhost:8080/accounts/me/tenures'
-    ).then(
-      (response) => {
-        const orgRequests = response.data.tenures.map((t) => {
-          return axios.get<OrganizationDto>('http://localhost:8080/organizations/'+t.organizationId)
-        })
-
-        Promise.all(orgRequests).then((r) => {
-          r.map((t, idx) => {
-            response.data.tenures[idx].organizationName = t.data.organization.name
-          })
-          setTenureDto(response.data)
-        })
-      }
-    )
-  }
-
+export default function ({style, profileDto, tenureDto}: Props) {
   return (
     <Layout.Content style={style}>
       <Row>
