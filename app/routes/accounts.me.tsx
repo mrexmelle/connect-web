@@ -44,6 +44,7 @@ export default function AccountsMe() {
     },
     status: ""
   })
+
   const [tenureDto, setTenureDto] = useState<TenureDto>({
     tenures: [],
     status: ""

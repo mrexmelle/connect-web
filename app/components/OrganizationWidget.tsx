@@ -1,7 +1,8 @@
-import { Breadcrumb, Col, Layout, Row, Table } from "antd";
+import { Breadcrumb, Col, Layout, Row, Table, Tree } from "antd";
 import { OrganizationDto, OrganizationMemberDto } from "~/models/Dto";
 import { useEffect, useState } from "react"
 import axios from "axios";
+import { TeamOutlined, UserOutlined } from "@ant-design/icons";
 
 interface Props {
   style: React.CSSProperties
@@ -11,6 +12,38 @@ interface Props {
 interface BcItem {
   title: string
 }
+const treeContents = [
+  {
+    icon: <TeamOutlined />,
+    title: 'Expand to load',
+    key: '0',
+    children: [
+      {
+        icon: <UserOutlined />,
+        title: 'Expanded',
+        key: '121',
+        isLeaf: true
+      },
+      {
+        icon: <UserOutlined />,
+        title: 'Expanded 2',
+        key: '12121',
+        isLeaf: true
+      }
+    ]
+  },
+  {
+    icon: <TeamOutlined />,
+    title: 'Expand to load',
+    key: '1',
+  },
+  {
+    icon: <UserOutlined />,
+    title: 'Tree Node',
+    key: '2',
+    isLeaf: true
+  },
+];
 
 const memberTableColumns = [
   {
@@ -105,7 +138,15 @@ export default function ({style, organizationId}: Props) {
   return (
     <Layout.Content style={style}>
       <Row>
-        <Col span={24}>
+        <Col span={8}>
+          <h1>Organization Tree</h1>
+          <Tree
+            showIcon={true}
+            treeData={treeContents}
+            defaultExpandedKeys={['0']}
+          />
+        </Col>
+        <Col span={16}>
           <h1>{organizationDto.organization.name}</h1>
           <Breadcrumb items={breadCrumbItems} />
           <Table
