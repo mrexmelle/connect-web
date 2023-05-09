@@ -138,7 +138,7 @@ export default function ({style, organizationId}: Props) {
   return (
     <Layout.Content style={style}>
       <Row>
-        <Col span={8}>
+        <Col span={8} style={{ padding: "5px" }}>
           <h1>Organization Tree</h1>
           <Tree
             showIcon={true}
@@ -146,7 +146,7 @@ export default function ({style, organizationId}: Props) {
             defaultExpandedKeys={['0']}
           />
         </Col>
-        <Col span={16}>
+        <Col span={16} style={{ padding: "5px" }}>
           <h1>{organizationDto.organization.name}</h1>
           <Breadcrumb items={breadCrumbItems} />
           <Table
