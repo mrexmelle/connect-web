@@ -1,8 +1,9 @@
 import { Breadcrumb, Col, Layout, Row, Table, Tree } from "antd";
-import { OrganizationDto, OrganizationMemberDto } from "~/models/Dto";
-import { useEffect, useState } from "react"
+import { OrganizationDto, OrganizationMemberDto, TreeDto } from "~/models/Dto";
+import { Key, ReactNode, useEffect, useState } from "react"
 import axios from "axios";
 import { TeamOutlined, UserOutlined } from "@ant-design/icons";
+import { OrganizationTreeEntity } from "~/models/Entity";
 
 interface Props {
   style: React.CSSProperties
@@ -12,38 +13,14 @@ interface Props {
 interface BcItem {
   title: string
 }
-const treeContents = [
-  {
-    icon: <TeamOutlined />,
-    title: 'Expand to load',
-    key: '0',
-    children: [
-      {
-        icon: <UserOutlined />,
-        title: 'Expanded',
-        key: '121',
-        isLeaf: true
-      },
-      {
-        icon: <UserOutlined />,
-        title: 'Expanded 2',
-        key: '12121',
-        isLeaf: true
-      }
-    ]
-  },
-  {
-    icon: <TeamOutlined />,
-    title: 'Expand to load',
-    key: '1',
-  },
-  {
-    icon: <UserOutlined />,
-    title: 'Tree Node',
-    key: '2',
-    isLeaf: true
-  },
-];
+
+interface TreeItem {
+  icon: ReactNode
+  title: string
+  key: Key
+  isLeaf: boolean
+  children: TreeItem[]
+}
 
 const memberTableColumns = [
   {
@@ -84,10 +61,13 @@ export default function ({style, organizationId}: Props) {
     members: [],
     status: ""
   })
+  const [treeContent, setTreeContent] = useState<TreeItem[]>([])
+  const [expandedKeys, setExpandedKeys] = useState<Key[]>([])
 
   useEffect(() => {
-    fetchOrganization(),
+    fetchOrganization()
     fetchMember()
+    fetchTree()
   }, [])
 
   function fetchOrganization() {
@@ -126,12 +106,44 @@ export default function ({style, organizationId}: Props) {
     )
   }
 
+  function fillTreeWithDto(entity: OrganizationTreeEntity): TreeItem {
+    var uiNode: TreeItem = {
+      icon: <TeamOutlined />,
+      title: entity.organization.name,
+      key: entity.organization.id,
+      isLeaf: false,
+      children: new Array<TreeItem>(entity.children.length)
+    }
+    for (let [i, _] of entity.children.entries()) {
+      uiNode.children[i] = fillTreeWithDto(entity.children[i])
+    }
+    return uiNode
+  }
+
+  function fetchTree() {
+    axios.defaults.withCredentials = true
+    axios.get<TreeDto>(
+      'http://localhost:8080/organizations/'+organizationId+'/siblings-and-ancestral-siblings'
+    ).then(
+      (response) => {
+        var tc = new Array<TreeItem>(1)
+        tc[0]=fillTreeWithDto(response.data.tree)
+        setTreeContent(tc)
+        var lineage = organizationDto.organization.hierarchy
+        
+      }
+    )
+  }
+
   function generateBreadcumbItems(hierarchy: string) {
-    var bcItems = hierarchy.split('.').map<BcItem>((h) => {
+    var lineage = hierarchy.split('.')
+    var bcItems = lineage.map<BcItem>((h) => {
       return {
         title: h
       }
     })
+    console.log('lineage: ' + lineage)
+    setExpandedKeys(lineage)
     setBreadcrumbItems(bcItems)
   }
 
@@ -142,8 +154,12 @@ export default function ({style, organizationId}: Props) {
           <h1>Organization Tree</h1>
           <Tree
             showIcon={true}
-            treeData={treeContents}
-            defaultExpandedKeys={['0']}
+            treeData={treeContent}
+            defaultExpandedKeys={expandedKeys}
+            expandedKeys={expandedKeys}
+            onExpand={(keys) => {
+              setExpandedKeys(keys)
+            }}
           />
         </Col>
         <Col span={16} style={{ padding: "5px" }}>

@@ -36,3 +36,8 @@ export interface OrganizationMemberEntity {
     isLead: string,
     organizationRole: string
 }
+
+export interface OrganizationTreeEntity {
+    organization: OrganizationEntity,
+    children: OrganizationTreeEntity[]
+}
