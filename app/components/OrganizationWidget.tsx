@@ -3,7 +3,7 @@ import { OrganizationMemberDto, TreeDto } from "~/models/Dto";
 import { Key, ReactNode, useEffect, useState } from "react"
 import axios from "axios";
 import { TeamOutlined } from "@ant-design/icons";
-import { OrganizationEntity, OrganizationTreeEntity } from "~/models/Entity";
+import { OrganizationEntity, OrganizationMemberEntity, OrganizationTreeEntity } from "~/models/Entity";
 
 interface Props {
   style: React.CSSProperties
@@ -46,6 +46,7 @@ const memberTableColumns = [
 ]
 
 export default function ({style, organizationId}: Props) {
+  const [newOrganizationId, setNewOrganizationId] = useState<Key>(organizationId)
   const [breadCrumbItems, setBreadcrumbItems] = useState<BcItem[]>([])
   const [organizationEntity, setOrganizationEntity] = useState<OrganizationEntity>({
     id: "",
@@ -54,10 +55,7 @@ export default function ({style, organizationId}: Props) {
     leadEhid: "",
     emailAddress: ""
   })
-  const [memberDto, setMemberDto] = useState<OrganizationMemberDto>({
-    members: [],
-    status: ""
-  })
+  const [teamMembers, setTeamMembers] = useState<OrganizationMemberEntity[]>([])
   const [treeContent, setTreeContent] = useState<TreeItem[]>([])
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([])
   const [selectedKeys, setSelectedKeys] = useState<Key[]>([])
@@ -65,13 +63,16 @@ export default function ({style, organizationId}: Props) {
   useEffect(() => {
     fetchOrganization()
     fetchMember()
+  }, [newOrganizationId])
+
+  useEffect(() => {
     fetchTree()
   }, [])
 
   function fetchOrganization() {
     axios.defaults.withCredentials = true
     axios.get<TreeDto>(
-      'http://localhost:8080/organizations/'+organizationId+'/lineage'
+      'http://localhost:8080/organizations/'+newOrganizationId+'/lineage'
     ).then(
       (response) => {
         setOrganizationInformation(response.data)
@@ -82,7 +83,7 @@ export default function ({style, organizationId}: Props) {
   function fetchMember() {
     axios.defaults.withCredentials = true
     axios.get<OrganizationMemberDto>(
-      'http://localhost:8080/organizations/'+organizationId+'/members'
+      'http://localhost:8080/organizations/'+newOrganizationId+'/members'
     ).then(
       (response) => {
         var data = response.data
@@ -92,18 +93,21 @@ export default function ({style, organizationId}: Props) {
           }
         })
         data.members.sort((a,b) => {
-          if(a.isLead) {
+          if (a.isLead) {
             return -1
-          } else {
+          } else if (b.isLead) {
             return 1
+          } else {
+          return a.name < b.name ? -1 : 1
           }
         })
-        setMemberDto(data)
+        setTeamMembers(data.members)
       }
     )
   }
 
   function fillTree(entity: OrganizationTreeEntity): TreeItem {
+    console.log("fillTree is called")
     var uiNode: TreeItem = {
       icon: <TeamOutlined />,
       title: entity.organization.name,
@@ -145,42 +149,17 @@ export default function ({style, organizationId}: Props) {
   }
 
   function fetchTree() {
+    if (treeContent.length > 0) {
+      return
+    }
     axios.defaults.withCredentials = true
     axios.get<TreeDto>(
-      'http://localhost:8080/organizations/'+organizationId+'/siblings-and-ancestral-siblings'
+      'http://localhost:8080/organizations/'+newOrganizationId+'/siblings-and-ancestral-siblings'
     ).then(
       (response) => {
         var tc = new Array<TreeItem>(1)
         tc[0]=fillTree(response.data.tree)
         setTreeContent(tc)        
-      }
-    )
-  }
-
-  function fetchChildren(item: TreeItem) {
-    console.log('fetching ...')
-    axios.defaults.withCredentials = true
-    axios.get<TreeDto>(
-      'http://localhost:8080/organizations/'+item.key+'/children'
-    ).then(
-      (response) => {
-        var tree = response.data.tree
-        if (tree.children.length == 0) {
-          item.isLeaf = true
-        }
-
-        for (let [_, org] of tree.children.entries()) {
-          console.log("found: " + org.organization.id)
-          var treeItem = {
-            icon: <TeamOutlined />,
-            title: org.organization.name,
-            key: org.organization.id,
-            isLeaf: false,
-            children: []
-          }
-          item.children.push(treeItem)
-        }
-        setTreeContent((tc) => { return treeContent })
       }
     )
   }
@@ -207,46 +186,51 @@ export default function ({style, organizationId}: Props) {
     setOrganizationEntity(lastOrganization)
     setBreadcrumbItems(bcItems)
     setSelectedKeys([keys[keys.length-1]])
-    setExpandedKeys(keys.slice(0,-1))
-    
+
+    if (expandedKeys.length == 0) {
+      setExpandedKeys(keys.slice(0,-1))
+    }
   }
 
   function onTreeItemExpanded(keys: Key[], info: any) {
     if (info.expanded) {
-      console.log(keys + " are expanded")
       var lastKey = keys[keys.length-1]
-      axios.defaults.withCredentials = true
-      var response = axios.get<TreeDto>(
-        'http://localhost:8080/organizations/'+lastKey+'/children'
-      )
-
-      Promise.all([response]).then((r) => {
-        var treeClone = cloneTreeItem(treeContent[0])
-        var node = findNodeByKey(lastKey, treeClone)
-        if (node) {
+      var treeClone = cloneTreeItem(treeContent[0])
+      var node = findNodeByKey(lastKey, treeClone)
+      if (node && node.children.length == 0) {
+        console.log("requesting")
+        axios.defaults.withCredentials = true
+        var response = axios.get<TreeDto>(
+          'http://localhost:8080/organizations/'+lastKey+'/children'
+        )
+        Promise.all([response]).then((r) => {
           var tree = r[0].data.tree
-          if (tree.children.length == 0) {
-            node.isLeaf = true
-          } else {
-            node.children = tree.children.map((item: OrganizationTreeEntity) => {
-              return {
-                icon: <TeamOutlined />,
-                title: item.organization.name,
-                key: item.organization.id,
-                isLeaf: false,
-                children: []
-              }
-            })
+          if (node) { /* Just to remove node null warning */
+            if (tree.children.length == 0) {
+              node.isLeaf = true
+            } else {
+              node.children = tree.children.map((item: OrganizationTreeEntity) => {
+                return {
+                  icon: <TeamOutlined />,
+                  title: item.organization.name,
+                  key: item.organization.id,
+                  isLeaf: false,
+                  children: []
+                }
+              })
+            }
           }
-        }
-        setTreeContent([treeClone])
-      })
+          setTreeContent([treeClone])
+        })
+      }
     }
     setExpandedKeys(keys)
   }
 
   function onTreeItemSelected(keys: Key[]) {
-    console.log(keys + " are selected")
+    if (keys.length != 0 && keys[0] != newOrganizationId) {
+      setNewOrganizationId(keys[0])
+    }
     setSelectedKeys(keys)
   }
 
@@ -273,7 +257,7 @@ export default function ({style, organizationId}: Props) {
             pagination={false}
             columns={memberTableColumns}
             rowKey="ehid"
-            dataSource={memberDto.members} />
+            dataSource={teamMembers} />
         </Col>
       </Row>
     </Layout.Content>
