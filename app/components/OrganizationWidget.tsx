@@ -1,8 +1,8 @@
 import { Breadcrumb, Col, Layout, Row, Table, Tree } from "antd";
-import { OrganizationDto, OrganizationMemberDto, TreeDto } from "~/models/Dto";
+import { OrganizationMemberDto, TreeDto } from "~/models/Dto";
 import { Key, ReactNode, useEffect, useState } from "react"
 import axios from "axios";
-import { TeamOutlined, UserOutlined } from "@ant-design/icons";
+import { TeamOutlined } from "@ant-design/icons";
 import { OrganizationEntity, OrganizationTreeEntity } from "~/models/Entity";
 
 interface Props {
@@ -103,7 +103,7 @@ export default function ({style, organizationId}: Props) {
     )
   }
 
-  function fillTreeWithDto(entity: OrganizationTreeEntity): TreeItem {
+  function fillTree(entity: OrganizationTreeEntity): TreeItem {
     var uiNode: TreeItem = {
       icon: <TeamOutlined />,
       title: entity.organization.name,
@@ -112,9 +112,36 @@ export default function ({style, organizationId}: Props) {
       children: new Array<TreeItem>(entity.children.length)
     }
     for (let [i, _] of entity.children.entries()) {
-      uiNode.children[i] = fillTreeWithDto(entity.children[i])
+      uiNode.children[i] = fillTree(entity.children[i])
     }
     return uiNode
+  }
+
+  function findNodeByKey(key: Key, tree: TreeItem): TreeItem|null {
+    if (key == tree.key) {
+      return tree
+    }
+    for (let [i, _] of tree.children.entries()) {
+      var node = findNodeByKey(key, tree.children[i])
+      if (node) {
+        return node
+      }
+    }
+    return null
+  }
+
+  function cloneTreeItem(item: TreeItem): TreeItem {
+    var clone = {
+      icon: item.icon,
+      title: item.title,
+      key: item.key,
+      isLeaf: item.isLeaf,
+      children: Array<TreeItem>(item.children.length)
+    }
+    for (let [i, _] of item.children.entries()) {
+      clone.children[i] = cloneTreeItem(item.children[i])
+    }
+    return clone
   }
 
   function fetchTree() {
@@ -124,8 +151,36 @@ export default function ({style, organizationId}: Props) {
     ).then(
       (response) => {
         var tc = new Array<TreeItem>(1)
-        tc[0]=fillTreeWithDto(response.data.tree)
+        tc[0]=fillTree(response.data.tree)
         setTreeContent(tc)        
+      }
+    )
+  }
+
+  function fetchChildren(item: TreeItem) {
+    console.log('fetching ...')
+    axios.defaults.withCredentials = true
+    axios.get<TreeDto>(
+      'http://localhost:8080/organizations/'+item.key+'/children'
+    ).then(
+      (response) => {
+        var tree = response.data.tree
+        if (tree.children.length == 0) {
+          item.isLeaf = true
+        }
+
+        for (let [_, org] of tree.children.entries()) {
+          console.log("found: " + org.organization.id)
+          var treeItem = {
+            icon: <TeamOutlined />,
+            title: org.organization.name,
+            key: org.organization.id,
+            isLeaf: false,
+            children: []
+          }
+          item.children.push(treeItem)
+        }
+        setTreeContent((tc) => { return treeContent })
       }
     )
   }
@@ -134,19 +189,65 @@ export default function ({style, organizationId}: Props) {
     var bcItems = []
     var keys = []
     var lastOrganization = organizationEntity
-    var node = dto.tree
-    while (node.children.length != 0) {
+    var node : OrganizationTreeEntity|null = dto.tree
+    while(node) {
       bcItems.push({
         title: node.organization.name
       })
       keys.push(node.organization.id)
       lastOrganization = node.organization
-      node = node.children[0]
+
+      if (node.children.length > 0) {
+        node = node.children[0]
+      } else {
+        node = null
+      }
     }
+
     setOrganizationEntity(lastOrganization)
     setBreadcrumbItems(bcItems)
-    setExpandedKeys(keys)
     setSelectedKeys([keys[keys.length-1]])
+    setExpandedKeys(keys.slice(0,-1))
+    
+  }
+
+  function onTreeItemExpanded(keys: Key[], info: any) {
+    if (info.expanded) {
+      console.log(keys + " are expanded")
+      var lastKey = keys[keys.length-1]
+      axios.defaults.withCredentials = true
+      var response = axios.get<TreeDto>(
+        'http://localhost:8080/organizations/'+lastKey+'/children'
+      )
+
+      Promise.all([response]).then((r) => {
+        var treeClone = cloneTreeItem(treeContent[0])
+        var node = findNodeByKey(lastKey, treeClone)
+        if (node) {
+          var tree = r[0].data.tree
+          if (tree.children.length == 0) {
+            node.isLeaf = true
+          } else {
+            node.children = tree.children.map((item: OrganizationTreeEntity) => {
+              return {
+                icon: <TeamOutlined />,
+                title: item.organization.name,
+                key: item.organization.id,
+                isLeaf: false,
+                children: []
+              }
+            })
+          }
+        }
+        setTreeContent([treeClone])
+      })
+    }
+    setExpandedKeys(keys)
+  }
+
+  function onTreeItemSelected(keys: Key[]) {
+    console.log(keys + " are selected")
+    setSelectedKeys(keys)
   }
 
   return (
@@ -161,12 +262,8 @@ export default function ({style, organizationId}: Props) {
             defaultSelectedKeys={selectedKeys}
             expandedKeys={expandedKeys}
             selectedKeys={selectedKeys}
-            onExpand={(keys) => {
-              setExpandedKeys(keys)
-            }}
-            onSelect={(keys) => {
-              setSelectedKeys(keys)
-            }}
+            onExpand={onTreeItemExpanded}
+            onSelect={onTreeItemSelected}
           />
         </Col>
         <Col span={16} style={{ padding: "5px" }}>
