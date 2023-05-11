@@ -3,7 +3,7 @@ import { OrganizationDto, OrganizationMemberDto, TreeDto } from "~/models/Dto";
 import { Key, ReactNode, useEffect, useState } from "react"
 import axios from "axios";
 import { TeamOutlined, UserOutlined } from "@ant-design/icons";
-import { OrganizationTreeEntity } from "~/models/Entity";
+import { OrganizationEntity, OrganizationTreeEntity } from "~/models/Entity";
 
 interface Props {
   style: React.CSSProperties
@@ -47,15 +47,12 @@ const memberTableColumns = [
 
 export default function ({style, organizationId}: Props) {
   const [breadCrumbItems, setBreadcrumbItems] = useState<BcItem[]>([])
-  const [organizationDto, setOrganizationDto] = useState<OrganizationDto>({
-    organization: {
-      id: "",
-      hierarchy: "",
-      name: "",
-      leadEhid: "",
-      emailAddress: ""
-    },
-    status: ""
+  const [organizationEntity, setOrganizationEntity] = useState<OrganizationEntity>({
+    id: "",
+    hierarchy: "",
+    name: "",
+    leadEhid: "",
+    emailAddress: ""
   })
   const [memberDto, setMemberDto] = useState<OrganizationMemberDto>({
     members: [],
@@ -63,6 +60,7 @@ export default function ({style, organizationId}: Props) {
   })
   const [treeContent, setTreeContent] = useState<TreeItem[]>([])
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([])
+  const [selectedKeys, setSelectedKeys] = useState<Key[]>([])
 
   useEffect(() => {
     fetchOrganization()
@@ -72,12 +70,11 @@ export default function ({style, organizationId}: Props) {
 
   function fetchOrganization() {
     axios.defaults.withCredentials = true
-    axios.get<OrganizationDto>(
-      'http://localhost:8080/organizations/'+organizationId
+    axios.get<TreeDto>(
+      'http://localhost:8080/organizations/'+organizationId+'/lineage'
     ).then(
       (response) => {
-        generateBreadcumbItems(response.data.organization.hierarchy)
-        setOrganizationDto(response.data)
+        setOrganizationInformation(response.data)
       }
     )
   }
@@ -128,23 +125,28 @@ export default function ({style, organizationId}: Props) {
       (response) => {
         var tc = new Array<TreeItem>(1)
         tc[0]=fillTreeWithDto(response.data.tree)
-        setTreeContent(tc)
-        var lineage = organizationDto.organization.hierarchy
-        
+        setTreeContent(tc)        
       }
     )
   }
 
-  function generateBreadcumbItems(hierarchy: string) {
-    var lineage = hierarchy.split('.')
-    var bcItems = lineage.map<BcItem>((h) => {
-      return {
-        title: h
-      }
-    })
-    console.log('lineage: ' + lineage)
-    setExpandedKeys(lineage)
+  function setOrganizationInformation(dto: TreeDto) {
+    var bcItems = []
+    var keys = []
+    var lastOrganization = organizationEntity
+    var node = dto.tree
+    while (node.children.length != 0) {
+      bcItems.push({
+        title: node.organization.name
+      })
+      keys.push(node.organization.id)
+      lastOrganization = node.organization
+      node = node.children[0]
+    }
+    setOrganizationEntity(lastOrganization)
     setBreadcrumbItems(bcItems)
+    setExpandedKeys(keys)
+    setSelectedKeys([keys[keys.length-1]])
   }
 
   return (
@@ -156,14 +158,19 @@ export default function ({style, organizationId}: Props) {
             showIcon={true}
             treeData={treeContent}
             defaultExpandedKeys={expandedKeys}
+            defaultSelectedKeys={selectedKeys}
             expandedKeys={expandedKeys}
+            selectedKeys={selectedKeys}
             onExpand={(keys) => {
               setExpandedKeys(keys)
+            }}
+            onSelect={(keys) => {
+              setSelectedKeys(keys)
             }}
           />
         </Col>
         <Col span={16} style={{ padding: "5px" }}>
-          <h1>{organizationDto.organization.name}</h1>
+          <h1>{organizationEntity.name}</h1>
           <Breadcrumb items={breadCrumbItems} />
           <Table
             pagination={false}
