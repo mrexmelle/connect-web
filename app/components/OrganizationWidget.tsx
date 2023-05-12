@@ -1,27 +1,24 @@
-import { Breadcrumb, Button, Col, Layout, Row, Table, Tree } from "antd";
+import { Breadcrumb, Button, Col, Divider, Layout, Row, Table, Tree } from "antd";
 import { OrganizationMemberDto, TreeDto } from "~/models/Dto";
 import { Key, ReactNode, useEffect, useState } from "react"
 import axios, { AxiosError, AxiosResponse } from "axios";
-import { HomeOutlined, TeamOutlined } from "@ant-design/icons";
+import { HomeOutlined, MailOutlined, SlackOutlined, TeamOutlined } from "@ant-design/icons";
 import { OrganizationEntity, OrganizationMemberEntity, OrganizationTreeEntity } from "~/models/Entity";
 
 interface Props {
   style: React.CSSProperties
-  defaultOrganizationId: string,
-  organizationBundle: OrganizationBundle,
-  onDataChange: (data: OrganizationBundle) => void
-}
-
-export interface OrganizationBundle {
-  currentOrganizationId: string,
-  treeContent: TreeItem[]
+  defaultOrganizationId: Key,
+  lastSelectedOrganizationId: Key,
+  lastTreeContent: TreeItem[],
+  onSelectedOrganizationIdChange: (id: Key) => void,
+  onTreeItemChange: (treeItem: TreeItem[]) => void
 }
 
 interface BcItem {
   title: string
 }
 
-interface TreeItem {
+export interface TreeItem {
   icon: ReactNode
   title: string
   key: Key
@@ -48,9 +45,18 @@ const memberTableColumns = [
   }
 ]
 
-export default function ({style, defaultOrganizationId, organizationBundle, onDataChange}: Props) {
-  const [currentOrganizationId, setCurrentOrganizationId] = useState<Key>(organizationBundle.currentOrganizationId)
-  const [treeContent, setTreeContent] = useState<TreeItem[]>(organizationBundle.treeContent)
+export default function ({
+  style,
+  defaultOrganizationId,
+  lastSelectedOrganizationId,
+  lastTreeContent,
+  onSelectedOrganizationIdChange,
+  onTreeItemChange
+}: Props) {
+  console.log("default - organizationBundle.OrganizationId: " + lastSelectedOrganizationId)
+  console.log("default - organizationBundle.treeContent: " + lastTreeContent)
+  const [currentOrganizationId, setCurrentOrganizationId] = useState<Key>(lastSelectedOrganizationId)
+  const [treeContent, setTreeContent] = useState<TreeItem[]>(lastTreeContent)
   const [defaultHierarchy, setDefaultHierarchy] = useState<string[]>([])
 
   const [breadCrumbItems, setBreadcrumbItems] = useState<BcItem[]>([])
@@ -211,7 +217,6 @@ export default function ({style, defaultOrganizationId, organizationBundle, onDa
       var treeClone = cloneTreeItem(treeContent[0])
       var node = findNodeByKey(lastKey, treeClone)
       if (node && node.children.length == 0) {
-        console.log("requesting")
         axios.defaults.withCredentials = true
         var response = axios.get<TreeDto>(
           'http://localhost:8080/organizations/'+lastKey+'/children'
@@ -242,23 +247,21 @@ export default function ({style, defaultOrganizationId, organizationBundle, onDa
 
   function onTreeItemSelected(keys: Key[]) {
     if (keys.length != 0 && keys[0] != currentOrganizationId) {
+      console.log("onTreeItemSelected - setting current org id to: " + keys[0])
       setCurrentOrganizationId(keys[0])
-      onDataChange({
-        currentOrganizationId: keys[0].toString(),
-        treeContent: treeContent
-      })
+      onSelectedOrganizationIdChange(keys[0])
+      onTreeItemChange(treeContent)
     }
     setSelectedKeys(keys)
   }
 
   function onHomeClick(e: React.MouseEvent<HTMLAnchorElement>|React.MouseEvent<HTMLButtonElement>) {
+    console.log("onHomeClick - setting current org id to: " + defaultOrganizationId)
     setCurrentOrganizationId(defaultOrganizationId)
     setSelectedKeys([defaultOrganizationId])
     setExpandedKeys(defaultHierarchy)
-    onDataChange({
-      currentOrganizationId: defaultOrganizationId,
-      treeContent: treeContent
-    })
+    onSelectedOrganizationIdChange(defaultOrganizationId)
+    onTreeItemChange(treeContent)
   }
 
   return (
@@ -275,7 +278,9 @@ export default function ({style, defaultOrganizationId, organizationBundle, onDa
               size="middle"
               onClick={onHomeClick}
               disabled={organizationEntity.id==defaultOrganizationId}
-            >Home</Button>
+            >
+              Home
+            </Button>
             </Col>
           </Row>
           <Tree
@@ -292,8 +297,14 @@ export default function ({style, defaultOrganizationId, organizationBundle, onDa
         </Col>
         <Col span={16} style={{ padding: "5px" }}>
           <h1>{organizationEntity.name}</h1>
-          <Breadcrumb items={breadCrumbItems} />
+          <p>Email address: {organizationEntity.emailAddress}</p>
+          <Breadcrumb
+            items={breadCrumbItems}
+            style={{ paddingTop: "10px" }}
+            separator=">"
+          />
           <Table
+            style={{paddingTop: "10px" }}
             pagination={false}
             columns={memberTableColumns}
             rowKey="ehid"

@@ -1,9 +1,9 @@
-import { ApartmentOutlined, UserOutlined } from "@ant-design/icons";
+import { ApartmentOutlined, TeamOutlined, UserOutlined } from "@ant-design/icons";
 import { Layout, Menu } from "antd";
-import axios, { Axios, AxiosResponse } from "axios";
-import OrganizationWidget, { OrganizationBundle } from "~/components/OrganizationWidget";
+import axios, { AxiosResponse } from "axios";
+import OrganizationWidget, { TreeItem } from "~/components/OrganizationWidget";
 import ProfileWidget from "~/components/ProfileWidget";
-import { useEffect, useState } from "react"
+import { Key, useEffect, useState } from "react"
 import { OrganizationDto, ProfileDto, TenureDto } from "~/models/Dto";
 import { TenureEntity } from "~/models/Entity";
 
@@ -34,10 +34,8 @@ const siderItems= [
 
 export default function AccountsMe() {
   const [siderCollapsed, setSiderCollapsed] = useState<boolean>(false)
-  const [organizationBundle, setOrganizationBundle] = useState<OrganizationBundle>({
-    currentOrganizationId: "",
-    treeContent: []
-  })
+  const [lastSelectedOrganizationId, setLastSelectedOrganizationId] = useState<Key>("")
+  const [lastTreeContent, setLastTreeContent] = useState<TreeItem[]>([])
   const [selectedMenuItem, selectMenuItem] = useState<string>('MYP')
   const [profileDto, setProfileDto] = useState<ProfileDto>({
     profile: {
@@ -86,10 +84,10 @@ export default function AccountsMe() {
             response.data.tenures[idx].organizationName = t.data.organization.name
           })
           setTenureDto(response.data)
-          setOrganizationBundle({
-             currentOrganizationId: getCurrentOrganization(response.data.tenures),
-             treeContent: organizationBundle.treeContent
-          })
+          if (lastSelectedOrganizationId == "") {
+            console.log("org id is empty")
+            setLastSelectedOrganizationId(getCurrentOrganization(response.data.tenures))
+          }
         })
       }
     )
@@ -124,16 +122,22 @@ export default function AccountsMe() {
         return <OrganizationWidget
           style={contentStyle}
           defaultOrganizationId={getCurrentOrganization(tenureDto.tenures)}
-          organizationBundle={organizationBundle}
-          onDataChange={handleOrganizationDataChange}
+          lastSelectedOrganizationId={lastSelectedOrganizationId}
+          lastTreeContent={lastTreeContent}
+          onSelectedOrganizationIdChange={handleLastSelectedOrganizationIdChange}
+          onTreeItemChange={handleLastTreeContentChange}
         />
       default:
         return 
     }
   }
 
-  function handleOrganizationDataChange(bundle: OrganizationBundle) {
-    setOrganizationBundle(organizationBundle)
+  function handleLastSelectedOrganizationIdChange(key: Key) {
+    setLastSelectedOrganizationId(key)
+  }
+
+  function handleLastTreeContentChange(trees: TreeItem[]) {
+    setLastTreeContent(trees)
   }
 
   return (
