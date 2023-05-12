@@ -1,10 +1,11 @@
 import { ApartmentOutlined, UserOutlined } from "@ant-design/icons";
 import { Layout, Menu } from "antd";
-import axios from "axios";
-import OrganizationWidget from "~/components/OrganizationWidget";
+import axios, { Axios, AxiosResponse } from "axios";
+import OrganizationWidget, { OrganizationBundle } from "~/components/OrganizationWidget";
 import ProfileWidget from "~/components/ProfileWidget";
 import { useEffect, useState } from "react"
 import { OrganizationDto, ProfileDto, TenureDto } from "~/models/Dto";
+import { TenureEntity } from "~/models/Entity";
 
 const contentStyle: React.CSSProperties = {
   margin: '10px',
@@ -33,6 +34,10 @@ const siderItems= [
 
 export default function AccountsMe() {
   const [siderCollapsed, setSiderCollapsed] = useState<boolean>(false)
+  const [organizationBundle, setOrganizationBundle] = useState<OrganizationBundle>({
+    currentOrganizationId: "",
+    treeContent: []
+  })
   const [selectedMenuItem, selectMenuItem] = useState<string>('MYP')
   const [profileDto, setProfileDto] = useState<ProfileDto>({
     profile: {
@@ -60,7 +65,7 @@ export default function AccountsMe() {
     axios.get<ProfileDto>(
       'http://localhost:8080/accounts/me/profile'
     ).then(
-      (response) => {
+      (response: AxiosResponse<ProfileDto>) => {
         setProfileDto(response.data)
       }
     )
@@ -71,24 +76,28 @@ export default function AccountsMe() {
     axios.get<TenureDto>(
       'http://localhost:8080/accounts/me/tenures'
     ).then(
-      (response) => {
+      (response: AxiosResponse<TenureDto>) => {
         const orgRequests = response.data.tenures.map((t) => {
           return axios.get<OrganizationDto>('http://localhost:8080/organizations/'+t.organizationId)
         })
 
-        Promise.all(orgRequests).then((r) => {
+        Promise.all(orgRequests).then((r: AxiosResponse<OrganizationDto>[]) => {
           r.map((t, idx) => {
             response.data.tenures[idx].organizationName = t.data.organization.name
           })
           setTenureDto(response.data)
+          setOrganizationBundle({
+             currentOrganizationId: getCurrentOrganization(response.data.tenures),
+             treeContent: organizationBundle.treeContent
+          })
         })
       }
     )
   }
 
-  function getCurrentOrganization(): string {
+  function getCurrentOrganization(tenures: TenureEntity[]): string {
     var orgId = ""
-    tenureDto.tenures.map((t, _) => {
+    tenures.map((t, _) => {
       var sdTokens = t.startDate.split("-")
       var sdDate = new Date(
         Number(sdTokens[0]),
@@ -114,11 +123,17 @@ export default function AccountsMe() {
       case 'ORG':
         return <OrganizationWidget
           style={contentStyle}
-          organizationId={getCurrentOrganization()}
+          defaultOrganizationId={getCurrentOrganization(tenureDto.tenures)}
+          organizationBundle={organizationBundle}
+          onDataChange={handleOrganizationDataChange}
         />
       default:
         return 
     }
+  }
+
+  function handleOrganizationDataChange(bundle: OrganizationBundle) {
+    setOrganizationBundle(organizationBundle)
   }
 
   return (
@@ -129,7 +144,8 @@ export default function AccountsMe() {
         <Menu items={siderItems} mode="inline"
           defaultSelectedKeys={['MYP']}
           selectedKeys={[selectedMenuItem]}
-          onSelect={(e) => selectMenuItem(e.key)}/>
+          onSelect={(e) => selectMenuItem(e.key)}>
+        </Menu>
       </Layout.Sider>
       <Layout>
         {selectWidget(selectedMenuItem)}

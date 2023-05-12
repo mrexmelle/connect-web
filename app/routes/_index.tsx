@@ -53,7 +53,7 @@ export default function Index() {
         password: password
       }
     ).then(
-      (response) => {
+      (_) => {
         navigate('/accounts/me')
       }
     )

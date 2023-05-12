@@ -1,13 +1,20 @@
-import { Breadcrumb, Col, Layout, Row, Table, Tree } from "antd";
+import { Breadcrumb, Button, Col, Layout, Row, Table, Tree } from "antd";
 import { OrganizationMemberDto, TreeDto } from "~/models/Dto";
 import { Key, ReactNode, useEffect, useState } from "react"
-import axios from "axios";
-import { TeamOutlined } from "@ant-design/icons";
+import axios, { AxiosError, AxiosResponse } from "axios";
+import { HomeOutlined, TeamOutlined } from "@ant-design/icons";
 import { OrganizationEntity, OrganizationMemberEntity, OrganizationTreeEntity } from "~/models/Entity";
 
 interface Props {
   style: React.CSSProperties
-  organizationId: string
+  defaultOrganizationId: string,
+  organizationBundle: OrganizationBundle,
+  onDataChange: (data: OrganizationBundle) => void
+}
+
+export interface OrganizationBundle {
+  currentOrganizationId: string,
+  treeContent: TreeItem[]
 }
 
 interface BcItem {
@@ -36,17 +43,16 @@ const memberTableColumns = [
     dataIndex: 'emailAddress'
   },
   {
-    title: 'Title',
-    dataIndex: 'titleName'
-  },
-  {
     title: 'Role',
     dataIndex: 'organizationRole'
   }
 ]
 
-export default function ({style, organizationId}: Props) {
-  const [newOrganizationId, setNewOrganizationId] = useState<Key>(organizationId)
+export default function ({style, defaultOrganizationId, organizationBundle, onDataChange}: Props) {
+  const [currentOrganizationId, setCurrentOrganizationId] = useState<Key>(organizationBundle.currentOrganizationId)
+  const [treeContent, setTreeContent] = useState<TreeItem[]>(organizationBundle.treeContent)
+  const [defaultHierarchy, setDefaultHierarchy] = useState<string[]>([])
+
   const [breadCrumbItems, setBreadcrumbItems] = useState<BcItem[]>([])
   const [organizationEntity, setOrganizationEntity] = useState<OrganizationEntity>({
     id: "",
@@ -56,14 +62,13 @@ export default function ({style, organizationId}: Props) {
     emailAddress: ""
   })
   const [teamMembers, setTeamMembers] = useState<OrganizationMemberEntity[]>([])
-  const [treeContent, setTreeContent] = useState<TreeItem[]>([])
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([])
   const [selectedKeys, setSelectedKeys] = useState<Key[]>([])
 
   useEffect(() => {
     fetchOrganization()
     fetchMember()
-  }, [newOrganizationId])
+  }, [currentOrganizationId])
 
   useEffect(() => {
     fetchTree()
@@ -72,9 +77,9 @@ export default function ({style, organizationId}: Props) {
   function fetchOrganization() {
     axios.defaults.withCredentials = true
     axios.get<TreeDto>(
-      'http://localhost:8080/organizations/'+newOrganizationId+'/lineage'
+      'http://localhost:8080/organizations/'+currentOrganizationId+'/lineage'
     ).then(
-      (response) => {
+      (response: AxiosResponse<TreeDto>) => {
         setOrganizationInformation(response.data)
       }
     )
@@ -83,13 +88,13 @@ export default function ({style, organizationId}: Props) {
   function fetchMember() {
     axios.defaults.withCredentials = true
     axios.get<OrganizationMemberDto>(
-      'http://localhost:8080/organizations/'+newOrganizationId+'/members'
+      'http://localhost:8080/organizations/'+currentOrganizationId+'/members'
     ).then(
-      (response) => {
+      (response: AxiosResponse<OrganizationMemberDto>) => {
         var data = response.data
         data.members.forEach((m, i) => {
           if(m.isLead) {
-            data.members[i].organizationRole = "Lead"
+            data.members[i].organizationRole = 'Lead'
           }
         })
         data.members.sort((a,b) => {
@@ -107,7 +112,6 @@ export default function ({style, organizationId}: Props) {
   }
 
   function fillTree(entity: OrganizationTreeEntity): TreeItem {
-    console.log("fillTree is called")
     var uiNode: TreeItem = {
       icon: <TeamOutlined />,
       title: entity.organization.name,
@@ -154,12 +158,17 @@ export default function ({style, organizationId}: Props) {
     }
     axios.defaults.withCredentials = true
     axios.get<TreeDto>(
-      'http://localhost:8080/organizations/'+newOrganizationId+'/siblings-and-ancestral-siblings'
+      'http://localhost:8080/organizations/'+currentOrganizationId+'/siblings-and-ancestral-siblings'
     ).then(
-      (response) => {
+      (response: AxiosResponse<TreeDto>) => {
         var tc = new Array<TreeItem>(1)
         tc[0]=fillTree(response.data.tree)
         setTreeContent(tc)        
+      }
+    ).catch(
+      (error: AxiosError<TreeDto>) => {
+        if (axios.isAxiosError(error) && error.response && error.response.status == 401) {
+        }
       }
     )
   }
@@ -183,6 +192,10 @@ export default function ({style, organizationId}: Props) {
       }
     }
 
+    if (defaultHierarchy.length == 0) {
+      setDefaultHierarchy(keys)
+    }
+
     setOrganizationEntity(lastOrganization)
     setBreadcrumbItems(bcItems)
     setSelectedKeys([keys[keys.length-1]])
@@ -203,7 +216,7 @@ export default function ({style, organizationId}: Props) {
         var response = axios.get<TreeDto>(
           'http://localhost:8080/organizations/'+lastKey+'/children'
         )
-        Promise.all([response]).then((r) => {
+        Promise.all([response]).then((r: AxiosResponse<TreeDto>[]) => {
           var tree = r[0].data.tree
           if (node) { /* Just to remove node null warning */
             if (tree.children.length == 0) {
@@ -228,18 +241,45 @@ export default function ({style, organizationId}: Props) {
   }
 
   function onTreeItemSelected(keys: Key[]) {
-    if (keys.length != 0 && keys[0] != newOrganizationId) {
-      setNewOrganizationId(keys[0])
+    if (keys.length != 0 && keys[0] != currentOrganizationId) {
+      setCurrentOrganizationId(keys[0])
+      onDataChange({
+        currentOrganizationId: keys[0].toString(),
+        treeContent: treeContent
+      })
     }
     setSelectedKeys(keys)
+  }
+
+  function onHomeClick(e: React.MouseEvent<HTMLAnchorElement>|React.MouseEvent<HTMLButtonElement>) {
+    setCurrentOrganizationId(defaultOrganizationId)
+    setSelectedKeys([defaultOrganizationId])
+    setExpandedKeys(defaultHierarchy)
+    onDataChange({
+      currentOrganizationId: defaultOrganizationId,
+      treeContent: treeContent
+    })
   }
 
   return (
     <Layout.Content style={style}>
       <Row>
         <Col span={8} style={{ padding: "5px" }}>
-          <h1>Organization Tree</h1>
+          <Row>
+            <Col span={16}>
+              <h1>Organization Tree</h1>
+            </Col>
+            <Col span={8} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <Button
+              icon={<HomeOutlined />}
+              size="middle"
+              onClick={onHomeClick}
+              disabled={organizationEntity.id==defaultOrganizationId}
+            >Home</Button>
+            </Col>
+          </Row>
           <Tree
+            showLine
             showIcon={true}
             treeData={treeContent}
             defaultExpandedKeys={expandedKeys}
