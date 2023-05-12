@@ -32,8 +32,8 @@ const rowStyle: React.CSSProperties = {
 }
 
 export default function Index() {
-  const [employeeId, setEmployeeId] = useState("")
-  const [password, setPassword] = useState("")
+  const [employeeId, setEmployeeId] = useState<string>("")
+  const [password, setPassword] = useState<string>("")
   const navigate = useNavigate()
 
   function onEmployeeIdChange(e: ChangeEvent<HTMLInputElement>) {
@@ -60,7 +60,7 @@ export default function Index() {
   }
 
   return (
-    <Layout>
+    <Layout style={{ minHeight: "100vh" }}>
       <Layout.Header style={headerStyle}> Connect Web </Layout.Header>
       <Layout.Content style={contentStyle}>
         <Row>
@@ -79,6 +79,9 @@ export default function Index() {
           <Col span={8} />
         </Row>
       </Layout.Content>
+      <Layout.Footer style={{ textAlign: 'center' }}>
+          Astro Technologies Indonesia ©2023
+        </Layout.Footer>
     </Layout>
   );
 }

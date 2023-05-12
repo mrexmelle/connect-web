@@ -2,7 +2,7 @@ import { Breadcrumb, Button, Col, Divider, Layout, Row, Table, Tree } from "antd
 import { OrganizationMemberDto, TreeDto } from "~/models/Dto";
 import { Key, ReactNode, useEffect, useState } from "react"
 import axios, { AxiosError, AxiosResponse } from "axios";
-import { HomeOutlined, MailOutlined, SlackOutlined, TeamOutlined } from "@ant-design/icons";
+import { HomeOutlined, TeamOutlined } from "@ant-design/icons";
 import { OrganizationEntity, OrganizationMemberEntity, OrganizationTreeEntity } from "~/models/Entity";
 
 interface Props {
@@ -42,6 +42,10 @@ const memberTableColumns = [
   {
     title: 'Role',
     dataIndex: 'organizationRole'
+  },
+  {
+    title: 'Employment Type',
+    dataIndex: 'employmentType'
   }
 ]
 
@@ -53,8 +57,6 @@ export default function ({
   onSelectedOrganizationIdChange,
   onTreeItemChange
 }: Props) {
-  console.log("default - organizationBundle.OrganizationId: " + lastSelectedOrganizationId)
-  console.log("default - organizationBundle.treeContent: " + lastTreeContent)
   const [currentOrganizationId, setCurrentOrganizationId] = useState<Key>(lastSelectedOrganizationId)
   const [treeContent, setTreeContent] = useState<TreeItem[]>(lastTreeContent)
   const [defaultHierarchy, setDefaultHierarchy] = useState<string[]>([])
@@ -86,7 +88,7 @@ export default function ({
       'http://localhost:8080/organizations/'+currentOrganizationId+'/lineage'
     ).then(
       (response: AxiosResponse<TreeDto>) => {
-        setOrganizationInformation(response.data)
+        setOrganizationInformation(response.data.tree)
       }
     )
   }
@@ -179,11 +181,11 @@ export default function ({
     )
   }
 
-  function setOrganizationInformation(dto: TreeDto) {
+  function setOrganizationInformation(tree: OrganizationTreeEntity) {
     var bcItems = []
     var keys = []
     var lastOrganization = organizationEntity
-    var node : OrganizationTreeEntity|null = dto.tree
+    var node : OrganizationTreeEntity|null = tree
     while(node) {
       bcItems.push({
         title: node.organization.name
@@ -239,6 +241,7 @@ export default function ({
             }
           }
           setTreeContent([treeClone])
+          onTreeItemChange([treeClone])
         })
       }
     }
@@ -259,7 +262,7 @@ export default function ({
     console.log("onHomeClick - setting current org id to: " + defaultOrganizationId)
     setCurrentOrganizationId(defaultOrganizationId)
     setSelectedKeys([defaultOrganizationId])
-    setExpandedKeys(defaultHierarchy)
+    setExpandedKeys(defaultHierarchy.slice(0,-1))
     onSelectedOrganizationIdChange(defaultOrganizationId)
     onTreeItemChange(treeContent)
   }

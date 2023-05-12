@@ -85,7 +85,6 @@ export default function AccountsMe() {
           })
           setTenureDto(response.data)
           if (lastSelectedOrganizationId == "") {
-            console.log("org id is empty")
             setLastSelectedOrganizationId(getCurrentOrganization(response.data.tenures))
           }
         })
@@ -124,19 +123,19 @@ export default function AccountsMe() {
           defaultOrganizationId={getCurrentOrganization(tenureDto.tenures)}
           lastSelectedOrganizationId={lastSelectedOrganizationId}
           lastTreeContent={lastTreeContent}
-          onSelectedOrganizationIdChange={handleLastSelectedOrganizationIdChange}
-          onTreeItemChange={handleLastTreeContentChange}
+          onSelectedOrganizationIdChange={handleSelectedOrganizationIdChange}
+          onTreeItemChange={handleTreeContentChange}
         />
       default:
         return 
     }
   }
 
-  function handleLastSelectedOrganizationIdChange(key: Key) {
+  function handleSelectedOrganizationIdChange(key: Key) {
     setLastSelectedOrganizationId(key)
   }
 
-  function handleLastTreeContentChange(trees: TreeItem[]) {
+  function handleTreeContentChange(trees: TreeItem[]) {
     setLastTreeContent(trees)
   }
 

@@ -34,6 +34,7 @@ export interface OrganizationMemberEntity {
     emailAddress: string,
     titleName: string,
     isLead: string,
+    employmentType: string,
     organizationRole: string
 }
 
