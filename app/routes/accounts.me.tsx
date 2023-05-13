@@ -1,4 +1,4 @@
-import { ApartmentOutlined, TeamOutlined, UserOutlined } from "@ant-design/icons";
+import { ApartmentOutlined, FileDoneOutlined, TeamOutlined, UserOutlined } from "@ant-design/icons";
 import { Layout, Menu } from "antd";
 import axios, { AxiosResponse } from "axios";
 import OrganizationWidget, { TreeItem } from "~/components/OrganizationWidget";
@@ -29,6 +29,11 @@ const siderItems= [
     key: 'ORG',
     icon: <ApartmentOutlined />,
     label: 'Organizations'
+  },
+  {
+    key: 'APP',
+    icon: <FileDoneOutlined />,
+    label: `Approval`
   }
 ]
 
@@ -103,17 +108,31 @@ export default function AccountsMe() {
     )
   }
 
+  function getDateFromString(ds: string): Date|null {
+    if (ds == '') {
+      return null
+    }
+
+    var tokens = ds.split("-")
+    if (tokens.length != 3) {
+      return null
+    }
+
+    return new Date(
+      Number(tokens[0]),
+      Number(tokens[1])-1,
+      Number(tokens[2])
+    )
+  }
+
   function getCurrentOrganizationIndex(tenures: TenureEntity[]): number {
     var currentOrgIndex = -1
+    var now = new Date()
     tenures.map((t, i) => {
-      var sdTokens = t.startDate.split("-")
-      var sdDate = new Date(
-        Number(sdTokens[0]),
-        Number(sdTokens[1])-1,
-        Number(sdTokens[2])
-      )
-
-      if (sdDate < new Date() && t.endDate == "") {
+      var sdDate = getDateFromString(t.startDate)
+      var edDate = getDateFromString(t.endDate)
+      
+      if ((sdDate != null && sdDate < now) && (edDate == null || edDate > now)) {
         currentOrgIndex = i
       }
     })
@@ -137,6 +156,8 @@ export default function AccountsMe() {
           onSelectedOrganizationIdChange={handleSelectedOrganizationIdChange}
           onTreeItemChange={handleTreeContentChange}
         />
+      case 'APP':
+        return <p> This is approval section</p>
       default:
         return 
     }
