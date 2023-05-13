@@ -5,7 +5,7 @@ import OrganizationWidget, { TreeItem } from "~/components/OrganizationWidget";
 import ProfileWidget from "~/components/ProfileWidget";
 import { Key, useEffect, useState } from "react"
 import { OrganizationDto, ProfileDto, TenureDto } from "~/models/Dto";
-import { TenureEntity } from "~/models/Entity";
+import { OrganizationEntity, TenureEntity } from "~/models/Entity";
 
 const contentStyle: React.CSSProperties = {
   margin: '10px',
@@ -34,6 +34,15 @@ const siderItems= [
 
 export default function AccountsMe() {
   const [siderCollapsed, setSiderCollapsed] = useState<boolean>(false)
+  const [defaultOrganization, setDefaultOrganization] = useState<OrganizationEntity>(
+    {
+      id: "",
+      hierarchy: "",
+      name: "",
+      leadEhid: "",
+      emailAddress: ""
+    }
+  )
   const [lastSelectedOrganizationId, setLastSelectedOrganizationId] = useState<Key>("")
   const [lastTreeContent, setLastTreeContent] = useState<TreeItem[]>([])
   const [selectedMenuItem, selectMenuItem] = useState<string>('MYP')
@@ -79,22 +88,24 @@ export default function AccountsMe() {
           return axios.get<OrganizationDto>('http://localhost:8080/organizations/'+t.organizationId)
         })
 
-        Promise.all(orgRequests).then((r: AxiosResponse<OrganizationDto>[]) => {
-          r.map((t, idx) => {
+        Promise.all(orgRequests).then((orgResponses: AxiosResponse<OrganizationDto>[]) => {
+          orgResponses.map((t, idx) => {
             response.data.tenures[idx].organizationName = t.data.organization.name
           })
           setTenureDto(response.data)
           if (lastSelectedOrganizationId == "") {
-            setLastSelectedOrganizationId(getCurrentOrganization(response.data.tenures))
+            var idx = getCurrentOrganizationIndex(response.data.tenures)
+            setDefaultOrganization(orgResponses[idx].data.organization)
+            setLastSelectedOrganizationId(orgResponses[idx].data.organization.id)
           }
         })
       }
     )
   }
 
-  function getCurrentOrganization(tenures: TenureEntity[]): string {
-    var orgId = ""
-    tenures.map((t, _) => {
+  function getCurrentOrganizationIndex(tenures: TenureEntity[]): number {
+    var currentOrgIndex = -1
+    tenures.map((t, i) => {
       var sdTokens = t.startDate.split("-")
       var sdDate = new Date(
         Number(sdTokens[0]),
@@ -103,10 +114,10 @@ export default function AccountsMe() {
       )
 
       if (sdDate < new Date() && t.endDate == "") {
-        orgId = t.organizationId
+        currentOrgIndex = i
       }
     })
-    return orgId
+    return currentOrgIndex
   }
 
   function selectWidget(key: string) {
@@ -120,7 +131,7 @@ export default function AccountsMe() {
       case 'ORG':
         return <OrganizationWidget
           style={contentStyle}
-          defaultOrganizationId={getCurrentOrganization(tenureDto.tenures)}
+          defaultOrganizationEntity={defaultOrganization}
           lastSelectedOrganizationId={lastSelectedOrganizationId}
           lastTreeContent={lastTreeContent}
           onSelectedOrganizationIdChange={handleSelectedOrganizationIdChange}

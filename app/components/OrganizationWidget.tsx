@@ -7,7 +7,7 @@ import { OrganizationEntity, OrganizationMemberEntity, OrganizationTreeEntity } 
 
 interface Props {
   style: React.CSSProperties
-  defaultOrganizationId: Key,
+  defaultOrganizationEntity: OrganizationEntity,
   lastSelectedOrganizationId: Key,
   lastTreeContent: TreeItem[],
   onSelectedOrganizationIdChange: (id: Key) => void,
@@ -51,7 +51,7 @@ const memberTableColumns = [
 
 export default function ({
   style,
-  defaultOrganizationId,
+  defaultOrganizationEntity,
   lastSelectedOrganizationId,
   lastTreeContent,
   onSelectedOrganizationIdChange,
@@ -200,10 +200,6 @@ export default function ({
       }
     }
 
-    if (defaultHierarchy.length == 0) {
-      setDefaultHierarchy(keys)
-    }
-
     setOrganizationEntity(lastOrganization)
     setBreadcrumbItems(bcItems)
     setSelectedKeys([keys[keys.length-1]])
@@ -259,11 +255,11 @@ export default function ({
   }
 
   function onHomeClick(e: React.MouseEvent<HTMLAnchorElement>|React.MouseEvent<HTMLButtonElement>) {
-    console.log("onHomeClick - setting current org id to: " + defaultOrganizationId)
-    setCurrentOrganizationId(defaultOrganizationId)
-    setSelectedKeys([defaultOrganizationId])
-    setExpandedKeys(defaultHierarchy.slice(0,-1))
-    onSelectedOrganizationIdChange(defaultOrganizationId)
+    setCurrentOrganizationId(defaultOrganizationEntity.id)
+    setSelectedKeys([defaultOrganizationEntity.id])
+    console.log("default hierarchy: " + defaultHierarchy)
+    setExpandedKeys(defaultOrganizationEntity.hierarchy.split('.').slice(0,-1))
+    onSelectedOrganizationIdChange(defaultOrganizationEntity.id)
     onTreeItemChange(treeContent)
   }
 
@@ -280,7 +276,7 @@ export default function ({
               icon={<HomeOutlined />}
               size="middle"
               onClick={onHomeClick}
-              disabled={organizationEntity.id==defaultOrganizationId}
+              disabled={organizationEntity.id==defaultOrganizationEntity.id}
             >
               Home
             </Button>
