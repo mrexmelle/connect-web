@@ -1,4 +1,4 @@
-import { Breadcrumb, Button, Col, Divider, Layout, Row, Table, Tree } from "antd";
+import { Breadcrumb, Button, Col, Layout, Row, Table, Tree } from "antd";
 import { OrganizationMemberDto, TreeDto } from "~/models/Dto";
 import { Key, ReactNode, useEffect, useState } from "react"
 import axios, { AxiosError, AxiosResponse } from "axios";
@@ -257,8 +257,8 @@ export default function ({
   function onHomeClick(e: React.MouseEvent<HTMLAnchorElement>|React.MouseEvent<HTMLButtonElement>) {
     setCurrentOrganizationId(defaultOrganizationEntity.id)
     setSelectedKeys([defaultOrganizationEntity.id])
-    console.log("default hierarchy: " + defaultHierarchy)
     setExpandedKeys(defaultOrganizationEntity.hierarchy.split('.').slice(0,-1))
+    
     onSelectedOrganizationIdChange(defaultOrganizationEntity.id)
     onTreeItemChange(treeContent)
   }
