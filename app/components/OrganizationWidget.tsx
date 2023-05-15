@@ -59,7 +59,6 @@ export default function ({
 }: Props) {
   const [currentOrganizationId, setCurrentOrganizationId] = useState<Key>(lastSelectedOrganizationId)
   const [treeContent, setTreeContent] = useState<TreeItem[]>(lastTreeContent)
-  const [defaultHierarchy, setDefaultHierarchy] = useState<string[]>([])
 
   const [breadCrumbItems, setBreadcrumbItems] = useState<BcItem[]>([])
   const [organizationEntity, setOrganizationEntity] = useState<OrganizationEntity>({
@@ -248,6 +247,7 @@ export default function ({
     if (keys.length != 0 && keys[0] != currentOrganizationId) {
       console.log("onTreeItemSelected - setting current org id to: " + keys[0])
       setCurrentOrganizationId(keys[0])
+      
       onSelectedOrganizationIdChange(keys[0])
       onTreeItemChange(treeContent)
     }
@@ -258,7 +258,7 @@ export default function ({
     setCurrentOrganizationId(defaultOrganizationEntity.id)
     setSelectedKeys([defaultOrganizationEntity.id])
     setExpandedKeys(defaultOrganizationEntity.hierarchy.split('.').slice(0,-1))
-    
+
     onSelectedOrganizationIdChange(defaultOrganizationEntity.id)
     onTreeItemChange(treeContent)
   }

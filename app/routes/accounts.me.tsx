@@ -31,6 +31,9 @@ const siderItems= [
     label: 'Organizations'
   },
   {
+    type: 'divider'
+  },
+  {
     key: 'APP',
     icon: <FileDoneOutlined />,
     label: `Approval`
