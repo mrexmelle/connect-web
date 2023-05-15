@@ -31,6 +31,7 @@ const siderItems= [
     label: 'Organizations'
   },
   {
+    key: 'DIV1',
     type: 'divider'
   },
   {
