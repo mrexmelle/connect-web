@@ -276,7 +276,7 @@ export default function ({
               icon={<HomeOutlined />}
               size="middle"
               onClick={onHomeClick}
-              disabled={organizationEntity.id==defaultOrganizationEntity.id}
+              disabled={organizationEntity.id == "" || organizationEntity.id==defaultOrganizationEntity.id}
             >
               Home
             </Button>

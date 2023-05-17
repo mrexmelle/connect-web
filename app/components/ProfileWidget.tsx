@@ -57,7 +57,7 @@ export default function ({style, profileDto, tenureDto}: Props) {
   return (
     <Layout.Content style={style}>
       <Row>
-        <Col span={24}>
+        <Col span={24} style={{ padding: "5px" }}>
           <h1>Profile</h1>
           <Table
             pagination={false}
@@ -68,7 +68,7 @@ export default function ({style, profileDto, tenureDto}: Props) {
       </Row>
       <Divider />
       <Row>
-        <Col span={24}>
+        <Col span={24} style={{ padding: "5px" }}>
           <h1>Tenures</h1>
           <Table
             pagination={false}
