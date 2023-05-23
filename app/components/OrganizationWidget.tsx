@@ -14,6 +14,13 @@ interface Props {
   onTreeItemChange: (treeItem: TreeItem[]) => void
 }
 
+const buttonColStyle: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'right',
+  alignItems: 'center',
+  padding: '5px'
+}
+
 interface BcItem {
   title: string
 }
@@ -245,7 +252,6 @@ export default function ({
 
   function onTreeItemSelected(keys: Key[]) {
     if (keys.length != 0 && keys[0] != currentOrganizationId) {
-      console.log("onTreeItemSelected - setting current org id to: " + keys[0])
       setCurrentOrganizationId(keys[0])
       
       onSelectedOrganizationIdChange(keys[0])
@@ -264,14 +270,14 @@ export default function ({
   }
 
   return (
-    <Layout.Content style={style}>
+    <Layout.Content>
       <Row>
         <Col span={8} style={{ padding: "5px" }}>
           <Row>
             <Col span={16}>
               <h1>Organization Tree</h1>
             </Col>
-            <Col span={8} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <Col span={8} style={buttonColStyle}>
             <Button
               icon={<HomeOutlined />}
               size="middle"
@@ -282,9 +288,10 @@ export default function ({
             </Button>
             </Col>
           </Row>
+          <Row>
           <Tree
             showLine
-            showIcon={true}
+            showIcon
             treeData={treeContent}
             defaultExpandedKeys={expandedKeys}
             defaultSelectedKeys={selectedKeys}
@@ -293,6 +300,7 @@ export default function ({
             onExpand={onTreeItemExpanded}
             onSelect={onTreeItemSelected}
           />
+          </Row>
         </Col>
         <Col span={16} style={{ padding: "5px" }}>
           <h1>{organizationEntity.name}</h1>

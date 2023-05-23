@@ -1,11 +1,13 @@
 import { ApartmentOutlined, FileDoneOutlined, TeamOutlined, UserOutlined } from "@ant-design/icons";
-import { Layout, Menu } from "antd";
-import axios, { AxiosResponse } from "axios";
+import { Layout, Menu, Modal } from "antd";
+import axios, { AxiosError, AxiosResponse } from "axios";
 import OrganizationWidget, { TreeItem } from "~/components/OrganizationWidget";
 import ProfileWidget from "~/components/ProfileWidget";
 import { Key, useEffect, useState } from "react"
 import { OrganizationDto, ProfileDto, TenureDto } from "~/models/Dto";
 import { OrganizationEntity, TenureEntity } from "~/models/Entity";
+import ApprovalFormWidget from "~/components/ApprovalFormWidget";
+import { useNavigate } from "@remix-run/react";
 
 const contentStyle: React.CSSProperties = {
   margin: '10px',
@@ -70,10 +72,11 @@ export default function AccountsMe() {
     tenures: [],
     status: ""
   })
+  const [modal, modalContextHolder] = Modal.useModal()
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetchProfile()
-    fetchTenures()
   }, [])
 
   function fetchProfile() {
@@ -83,8 +86,24 @@ export default function AccountsMe() {
     ).then(
       (response: AxiosResponse<ProfileDto>) => {
         setProfileDto(response.data)
+        fetchTenures()
       }
-    )
+    ).catch(
+      (err: AxiosError) => {
+        if (err.code == axios.AxiosError.ERR_BAD_REQUEST) {
+          modal.error({
+            title: "Unauthenticated session",
+            content: "This page can only be viewed by an authenticated user.",
+            okText: "Login",
+            onOk: (_) => {
+              navigate("/")
+            },
+            onCancel: (_) => {
+              navigate("/")
+            }
+          })
+        }
+    })
   }
 
   function fetchTenures() {
@@ -161,7 +180,9 @@ export default function AccountsMe() {
           onTreeItemChange={handleTreeContentChange}
         />
       case 'APP':
-        return <p> This is approval section</p>
+        return <ApprovalFormWidget
+          style={contentStyle}
+        />
       default:
         return 
     }
@@ -187,7 +208,10 @@ export default function AccountsMe() {
         </Menu>
       </Layout.Sider>
       <Layout>
-        {selectWidget(selectedMenuItem)}
+        <Layout.Content style={contentStyle}>
+          {selectWidget(selectedMenuItem)}
+          {modalContextHolder}
+        </Layout.Content>
         <Layout.Footer style={{ textAlign: 'center' }}>
           Astro Technologies Indonesia ©2023
         </Layout.Footer>

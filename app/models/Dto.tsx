@@ -1,4 +1,4 @@
-import { OrganizationEntity, OrganizationMemberEntity, OrganizationTreeEntity, ProfileEntity, TenureEntity } from "./Entity"
+import { OrganizationEntity, OrganizationMemberEntity, OrganizationTreeEntity, ProfileEntity, TemplateEntity, TenureEntity } from "./Entity"
 
 export interface OrganizationDto {
   organization: OrganizationEntity,
@@ -22,5 +22,15 @@ export interface OrganizationMemberDto {
 
 export interface TreeDto {
   tree: OrganizationTreeEntity,
+  status: string
+}
+
+export interface MultipleTemplateDto {
+  templates: TemplateEntity[],
+  status: string
+}
+
+export interface SingleTemplateDto {
+  template: TemplateEntity,
   status: string
 }

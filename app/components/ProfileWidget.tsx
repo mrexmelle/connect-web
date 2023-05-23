@@ -55,7 +55,7 @@ const tenureTableColumns = [
 
 export default function ({style, profileDto, tenureDto}: Props) {
   return (
-    <Layout.Content style={style}>
+    <Layout.Content>
       <Row>
         <Col span={24} style={{ padding: "5px" }}>
           <h1>Profile</h1>

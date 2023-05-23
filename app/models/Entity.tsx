@@ -42,3 +42,18 @@ export interface OrganizationTreeEntity {
     organization: OrganizationEntity,
     children: OrganizationTreeEntity[]
 }
+
+export interface FieldEntity {
+    type: string,
+    key: string,
+    label: string,
+    required: boolean
+}
+
+export interface TemplateEntity {
+    index: number,
+    code: string,
+    description: string,
+    reviewers: string[],
+    fields: FieldEntity[]
+}
