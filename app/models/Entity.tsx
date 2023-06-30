@@ -52,6 +52,7 @@ export interface FieldEntity {
 
 export interface TemplateEntity {
     index: number,
+    label: string,
     code: string,
     description: string,
     reviewers: string[],

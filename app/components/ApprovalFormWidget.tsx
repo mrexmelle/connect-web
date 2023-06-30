@@ -1,10 +1,11 @@
-import { Button, Col, Form, Input, Layout, List, Modal, Row, DatePicker, TimePicker } from "antd";
-import { Key, ReactNode, useEffect, useState } from "react"
-import axios, { AxiosError, AxiosResponse } from "axios";
-import { FormOutlined } from "@ant-design/icons";
+import { Button, Col, Form, Input, Layout, List, Modal, Row, DatePicker, TimePicker, Select, Divider } from "antd";
+import { ReactNode, useEffect, useState } from "react"
+import axios, { AxiosResponse } from "axios";
+import { FormOutlined, SearchOutlined } from "@ant-design/icons";
 import { FieldEntity, TemplateEntity } from "~/models/Entity";
 import { MultipleTemplateDto } from "~/models/Dto";
 import "~/styles/antd-list.css"
+import Search from "antd/es/transfer/search";
 
 interface Props {
   style: React.CSSProperties
@@ -23,6 +24,7 @@ export default function ({
   const [templates, setTemplates] = useState<TemplateEntity[]>([
     {
       index: -1,
+      label: "",
       code: "",
       description: "",
       reviewers: [],
@@ -35,14 +37,13 @@ export default function ({
     }
   ])
   const [templateListVisible, setTemplateListVisible] = useState<boolean>(false)
-  const [selectedTemplateIndex, setSelectedTemplateIndex] = useState<number>(0)
+  const [selectedTemplateIndex, setSelectedTemplateIndex] = useState<number>(-1)
   
   useEffect(() => {
     fetchTemplates()
   }, [])
 
   function fetchTemplates() {
-    console.log("Fetching ...")
     axios.defaults.withCredentials = true
     axios.get<MultipleTemplateDto>(
       'http://localhost:8081/templates'
@@ -50,24 +51,10 @@ export default function ({
       (response: AxiosResponse<MultipleTemplateDto>) => {
         for (var i=0; i<response.data.templates.length; i++) {
           response.data.templates[i].index=i
+          response.data.templates[i].label=response.data.templates[i].code+" - "+response.data.templates[i].description
         }
         setTemplates(response.data.templates)
       }
-    )
-  }
-
-  function renderItem(entity: TemplateEntity): ReactNode {
-    return (
-      <List.Item
-        style={{ padding: "5px" }}
-        onClick={(_) => {setSelectedTemplateIndex(entity.index)}}
-      >
-        <List.Item.Meta
-          title={entity.code}
-          description={entity.description}
-          className={"ant-list-item"}
-        />
-      </List.Item>
     )
   }
 
@@ -139,40 +126,64 @@ export default function ({
       </Row>
       <Modal
         open={templateListVisible}
-        title={"Templates"}
-        onOk={(_) => setTemplateListVisible(false)}
+        footer={null}
+        closable={false}
         onCancel={(_) => setTemplateListVisible(false)}
-        okText={"Submit"}
-        width={"60vw"}
+        closeIcon={null}
+        width={"80vw"}
       >
-        <Layout style={style}>
+        <Layout style={{backgroundColor: "white"}}>
           <Layout.Content>
             <Row>
-            <Col span={6} style={{ padding: "5px" }}>
-              <List
-                rowKey={"code"}
-                pagination={{
-                  align: "center",
-                  pageSize: 7
-                }}
-                dataSource={templates}
-                renderItem={renderItem}
-              />
-            </Col>
-            <Col span={12} style={{ padding: "5px" }}>
-              <h2>{templates[selectedTemplateIndex].code}</h2>
-              <p>{templates[selectedTemplateIndex].description}</p>
-            <Form
-              labelCol={{span: 8}}
-              wrapperCol={{span: 16}}
-            >
-              {
-                templates[selectedTemplateIndex].fields.map(
-                  (obj) => renderFields(obj)
-                )
-              }
-            </Form>
-            </Col>
+              <Col span={24}>
+                <Select
+                  suffixIcon={<SearchOutlined />}
+                  showSearch
+                  allowClear
+                  placeholder="Search templates"
+                  optionFilterProp="label"
+                  options={templates}
+                  fieldNames={
+                    {
+                      label: "label",
+                      value: "index"
+                    }
+                  }
+                  filterSort={
+                    (a: TemplateEntity, b: TemplateEntity) =>
+                      a.label.toLowerCase().localeCompare(b.label.toLowerCase())
+                  }
+                  style={{ width: "100%" }}
+                  size={"large"}
+                  onSelect={(v: number) => {setSelectedTemplateIndex(v)}}
+                  onClear={() => setSelectedTemplateIndex(-1)}
+                />
+              </Col>
+            </Row>
+            <Row>
+              <Col span={24}>
+                {selectedTemplateIndex == -1 ? <div /> :
+                  <Divider type="horizontal" />
+                }
+                {selectedTemplateIndex == -1 ? <div /> :
+                  <Form
+                    labelCol={{span: 4}}
+                    wrapperCol={{span: 20}}
+                  >
+                    {
+                      templates[selectedTemplateIndex].fields.map(
+                        (obj) => renderFields(obj)
+                      )
+                    }
+                    <Form.Item
+                      wrapperCol={{offset: 4, span: 20}}>
+                      <Button type="primary" htmlType="submit">
+                        Submit
+                      </Button>
+                    </Form.Item>
+                  </Form>
+                }
+              </Col>
             </Row>
           </Layout.Content>
         </Layout>

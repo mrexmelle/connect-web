@@ -50,6 +50,10 @@ const tenureTableColumns = [
   {
     title: 'Title',
     dataIndex: 'titleName'
+  },
+  {
+    title: 'Grade',
+    dataIndex: 'titleGrade'
   }
 ]
 
