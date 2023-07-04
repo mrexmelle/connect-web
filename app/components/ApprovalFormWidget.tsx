@@ -21,21 +21,7 @@ const buttonColStyle: React.CSSProperties = {
 export default function ({
   style
 }: Props) {
-  const [templates, setTemplates] = useState<TemplateEntity[]>([
-    {
-      index: -1,
-      label: "",
-      code: "",
-      description: "",
-      reviewers: [],
-      fields: [{
-        type: "",
-        label: "",
-        key: "",
-        required: false
-      }]
-    }
-  ])
+  const [templates, setTemplates] = useState<TemplateEntity[]>([])
   const [templateListVisible, setTemplateListVisible] = useState<boolean>(false)
   const [selectedTemplateIndex, setSelectedTemplateIndex] = useState<number>(-1)
   
@@ -68,7 +54,7 @@ export default function ({
         <Input.TextArea rows={5} />
       ); break;
       case 'date': node = (
-        <DatePicker />
+        <DatePicker format={"YYYY-MM-DD"}/>
       ); break;
       case 'time': node =(
         <TimePicker format={"HH:mm"} />
@@ -163,20 +149,20 @@ export default function ({
             <Row>
               <Col span={24}>
                 {selectedTemplateIndex == -1 ? <div /> :
-                  <Divider type="horizontal" />
+                  <Divider type="horizontal">
+                    {templates[selectedTemplateIndex].description}
+                  </Divider>
                 }
                 {selectedTemplateIndex == -1 ? <div /> :
                   <Form
-                    labelCol={{span: 4}}
-                    wrapperCol={{span: 20}}
+                    layout="vertical"
                   >
                     {
                       templates[selectedTemplateIndex].fields.map(
                         (obj) => renderFields(obj)
                       )
                     }
-                    <Form.Item
-                      wrapperCol={{offset: 4, span: 20}}>
+                    <Form.Item>
                       <Button type="primary" htmlType="submit">
                         Submit
                       </Button>

@@ -58,3 +58,8 @@ export interface TemplateEntity {
     reviewers: string[],
     fields: FieldEntity[]
 }
+
+export interface OptionEntity {
+    label: string,
+    value: string
+}
