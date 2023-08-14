@@ -6,7 +6,7 @@ import ProfileWidget from "~/components/ProfileWidget";
 import { Key, useEffect, useState } from "react"
 import { OrganizationDto, ProfileDto, TenureDto } from "~/models/Dto";
 import { OrganizationEntity, TenureEntity } from "~/models/Entity";
-import ApprovalFormWidget from "~/components/ApprovalFormWidget";
+import ApprovalWidget from "~/components/ApprovalWidget";
 import { useNavigate } from "@remix-run/react";
 
 const contentStyle: React.CSSProperties = {
@@ -180,7 +180,7 @@ export default function AccountsMe() {
           onTreeItemChange={handleTreeContentChange}
         />
       case 'APP':
-        return <ApprovalFormWidget
+        return <ApprovalWidget
           style={contentStyle}
         />
       default:

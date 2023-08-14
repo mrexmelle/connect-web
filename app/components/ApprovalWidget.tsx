@@ -5,7 +5,6 @@ import { FormOutlined, SearchOutlined } from "@ant-design/icons";
 import { FieldEntity, TemplateEntity } from "~/models/Entity";
 import { MultipleTemplateDto } from "~/models/Dto";
 import "~/styles/antd-list.css"
-import Search from "antd/es/transfer/search";
 
 interface Props {
   style: React.CSSProperties
@@ -21,6 +20,7 @@ const buttonColStyle: React.CSSProperties = {
 export default function ({
   style
 }: Props) {
+  const [form] = Form.useForm()
   const [templates, setTemplates] = useState<TemplateEntity[]>([])
   const [templateListVisible, setTemplateListVisible] = useState<boolean>(false)
   const [selectedTemplateIndex, setSelectedTemplateIndex] = useState<number>(-1)
@@ -72,6 +72,11 @@ export default function ({
       </Form.Item>
     )
   }
+
+  function postProposal() {
+    axios.defaults.withCredentials = true
+  }
+        
 
   return (
     <Layout.Content>
@@ -163,7 +168,8 @@ export default function ({
                       )
                     }
                     <Form.Item>
-                      <Button type="primary" htmlType="submit">
+                      <Button type="primary" htmlType="submit"
+                        onClick={() => postProposal()}>
                         Submit
                       </Button>
                     </Form.Item>

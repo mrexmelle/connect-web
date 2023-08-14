@@ -1,4 +1,5 @@
-import { Row, Col, Layout, Divider, Table } from "antd";
+import { Button, Form, Input, Row, Col, Layout, Divider, Table, Modal } from "antd";
+import { useState } from "react";
 import { ProfileDto, TenureDto } from "~/models/Dto";
 
 interface Props {
@@ -58,6 +59,8 @@ const tenureTableColumns = [
 ]
 
 export default function ({style, profileDto, tenureDto}: Props) {
+  const [changePasswordModalVisible, setChangePasswordModalVisible] = useState<boolean>(false)
+
   return (
     <Layout.Content>
       <Row>
@@ -81,6 +84,53 @@ export default function ({style, profileDto, tenureDto}: Props) {
             dataSource={tenureDto.tenures} />
         </Col>
       </Row>
+      <Divider />
+      <Row>
+        <Col span={24} style={{ padding: "5px" }}>
+          <h1>Credentials</h1>
+            <Button type="primary" htmlType="submit"
+                  onClick={() => setChangePasswordModalVisible(true)}>
+              Change Password
+            </Button>
+        </Col>
+      </Row>
+      <Modal
+        open={changePasswordModalVisible}
+        onCancel={(_) => setChangePasswordModalVisible(false)}
+      >
+        <Layout style={{backgroundColor: "white"}}>
+          <Layout.Content>
+            <Form
+              layout="vertical"
+            >
+              <Form.Item
+                key={"currentPassword"}
+                name={"currentPassword"}
+                label={"Current password"}
+                rules={[{required: true}]}
+              >
+                <Input.Password />
+              </Form.Item>
+              <Form.Item
+                key={"newPassword"}
+                name={"newPassword"}
+                label={"New password"}
+                rules={[{required: true}]}
+              >
+                <Input.Password />
+              </Form.Item>
+              <Form.Item
+                key={"confirmNewPassword"}
+                name={"confirmNewPassword"}
+                label={"Confirm new password"}
+                rules={[{required: true}]}
+              >
+                <Input.Password />
+              </Form.Item>
+            </Form>
+          </Layout.Content>
+        </Layout>
+      </Modal>
     </Layout.Content>
   );
 }
