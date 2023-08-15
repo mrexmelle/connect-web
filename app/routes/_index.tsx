@@ -45,7 +45,7 @@ export default function Index() {
     setPassword(e.target.value)
   }
 
-  function Login() {
+  function login() {
     if (employeeId == "" || password == "") {
       modal.warning({
         title: "Empty credential",
@@ -83,14 +83,14 @@ export default function Index() {
           <Col span={8}>
             <Row style={rowStyle}>
             <Input size="large" placeholder="Employee ID" prefix={<UserOutlined />}
-              onChange={onEmployeeIdChange} onPressEnter={Login}
+              onChange={onEmployeeIdChange} onPressEnter={login}
               value={employeeId}/>
             <Input.Password size="large" placeholder="Password" prefix={<KeyOutlined />}
-              onChange={onPasswordChange} onPressEnter={Login}
+              onChange={onPasswordChange} onPressEnter={login}
               value={password}/>
             </Row>
             <Row style={rowStyle}>
-            <Button size="large" type="primary" onClick={Login} block>Login</Button>
+            <Button size="large" type="primary" onClick={login} block>Login</Button>
             </Row>
           </Col>
           <Col span={8} />

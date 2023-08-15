@@ -1,6 +1,7 @@
 import { Button, Form, Input, Row, Col, Layout, Divider, Table, Modal } from "antd";
 import { useState } from "react";
 import { ProfileDto, TenureDto } from "~/models/Dto";
+import ChangePasswordModal from "./ChangePasswordModal";
 
 interface Props {
   style: React.CSSProperties,
@@ -94,43 +95,9 @@ export default function ({style, profileDto, tenureDto}: Props) {
             </Button>
         </Col>
       </Row>
-      <Modal
-        open={changePasswordModalVisible}
-        onCancel={(_) => setChangePasswordModalVisible(false)}
-      >
-        <Layout style={{backgroundColor: "white"}}>
-          <Layout.Content>
-            <Form
-              layout="vertical"
-            >
-              <Form.Item
-                key={"currentPassword"}
-                name={"currentPassword"}
-                label={"Current password"}
-                rules={[{required: true}]}
-              >
-                <Input.Password />
-              </Form.Item>
-              <Form.Item
-                key={"newPassword"}
-                name={"newPassword"}
-                label={"New password"}
-                rules={[{required: true}]}
-              >
-                <Input.Password />
-              </Form.Item>
-              <Form.Item
-                key={"confirmNewPassword"}
-                name={"confirmNewPassword"}
-                label={"Confirm new password"}
-                rules={[{required: true}]}
-              >
-                <Input.Password />
-              </Form.Item>
-            </Form>
-          </Layout.Content>
-        </Layout>
-      </Modal>
+      <ChangePasswordModal
+        isVisible={changePasswordModalVisible}
+        isVisibleDispatcher={setChangePasswordModalVisible}  />
     </Layout.Content>
   );
 }

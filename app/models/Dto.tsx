@@ -34,3 +34,12 @@ export interface SingleTemplateDto {
   template: TemplateEntity,
   status: string
 }
+
+export interface PatchPasswordRequestDto {
+  currentPassword: string,
+  newPassword: string
+}
+
+export interface PatchPasswordResponseDto {
+  status: string
+}
