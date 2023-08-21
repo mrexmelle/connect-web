@@ -10,6 +10,7 @@ interface Props {
 }
 
 export default function ({isVisible, isVisibleDispatcher}: Props) {
+  const API_BASE_URL = "http://localhost:8082/idp"
   const [form] = Form.useForm();
   const [currentPassword, setCurrentPassword] = useState<string>("")
   const [newPassword, setNewPassword] = useState<string>("")
@@ -64,8 +65,9 @@ export default function ({isVisible, isVisibleDispatcher}: Props) {
       return
     }
 
+    axios.defaults.withCredentials = true
     axios.patch<PatchPasswordResponseDto>(
-      'http://localhost:8080/accounts/me/password',
+      API_BASE_URL + '/accounts/me/password',
       {
         currentPassword: currentPassword,
         newPassword: newPassword
@@ -75,7 +77,7 @@ export default function ({isVisible, isVisibleDispatcher}: Props) {
         form.resetFields()
         isVisibleDispatcher?.call(null, false)
         notification.success({
-          message: "Password has been changed successfully"
+          message: "Password changed successfully"
         })
       }
     ).catch(
@@ -101,8 +103,7 @@ export default function ({isVisible, isVisibleDispatcher}: Props) {
             key="submit"
             htmlType="submit"
             type="primary"
-            onClick={(_) => patchPassword()}
-            disabled={false}
+            onClick={() => patchPassword()}
           >
               Submit
           </Button>

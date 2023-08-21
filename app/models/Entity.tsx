@@ -64,4 +64,12 @@ export interface OptionEntity {
     value: string
 }
 
+export interface ProposalEntity {
+    id: string,
+    author: string,
+    templateCode: string,
+    reviewers: string[][],
+    fields: Map<string, string>
+}
+
 

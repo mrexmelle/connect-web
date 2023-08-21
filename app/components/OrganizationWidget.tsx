@@ -64,6 +64,7 @@ export default function ({
   onSelectedOrganizationIdChange,
   onTreeItemChange
 }: Props) {
+  const API_BASE_URL = "http://localhost:8082/idp"
   const [currentOrganizationId, setCurrentOrganizationId] = useState<Key>(lastSelectedOrganizationId)
   const [treeContent, setTreeContent] = useState<TreeItem[]>(lastTreeContent)
 
@@ -91,7 +92,7 @@ export default function ({
   function fetchOrganization() {
     axios.defaults.withCredentials = true
     axios.get<TreeDto>(
-      'http://localhost:8080/organizations/'+currentOrganizationId+'/lineage'
+      API_BASE_URL + '/organizations/'+currentOrganizationId+'/lineage'
     ).then(
       (response: AxiosResponse<TreeDto>) => {
         setOrganizationInformation(response.data.tree)
@@ -102,7 +103,7 @@ export default function ({
   function fetchMember() {
     axios.defaults.withCredentials = true
     axios.get<OrganizationMemberDto>(
-      'http://localhost:8080/organizations/'+currentOrganizationId+'/members'
+      API_BASE_URL + '/organizations/'+currentOrganizationId+'/members'
     ).then(
       (response: AxiosResponse<OrganizationMemberDto>) => {
         var data = response.data
@@ -172,7 +173,7 @@ export default function ({
     }
     axios.defaults.withCredentials = true
     axios.get<TreeDto>(
-      'http://localhost:8080/organizations/'+currentOrganizationId+'/siblings-and-ancestral-siblings'
+      API_BASE_URL + '/organizations/'+currentOrganizationId+'/siblings-and-ancestral-siblings'
     ).then(
       (response: AxiosResponse<TreeDto>) => {
         var tc = new Array<TreeItem>(1)
@@ -223,7 +224,7 @@ export default function ({
       if (node && node.children.length == 0) {
         axios.defaults.withCredentials = true
         var response = axios.get<TreeDto>(
-          'http://localhost:8080/organizations/'+lastKey+'/children'
+          API_BASE_URL + '/organizations/'+lastKey+'/children'
         )
         Promise.all([response]).then((r: AxiosResponse<TreeDto>[]) => {
           var tree = r[0].data.tree

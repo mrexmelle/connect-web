@@ -44,6 +44,7 @@ const siderItems= [
 ]
 
 export default function AccountsMe() {
+  const API_BASE_URL = "http://localhost:8082/idp"
   const [siderCollapsed, setSiderCollapsed] = useState<boolean>(false)
   const [defaultOrganization, setDefaultOrganization] = useState<OrganizationEntity>(
     {
@@ -82,7 +83,7 @@ export default function AccountsMe() {
   function fetchProfile() {
     axios.defaults.withCredentials = true
     axios.get<ProfileDto>(
-      'http://localhost:8080/accounts/me/profile'
+      API_BASE_URL + '/accounts/me/profile'
     ).then(
       (response: AxiosResponse<ProfileDto>) => {
         setProfileDto(response.data)
@@ -109,11 +110,11 @@ export default function AccountsMe() {
   function fetchTenures() {
     axios.defaults.withCredentials = true
     axios.get<TenureDto>(
-      'http://localhost:8080/accounts/me/tenures'
+      API_BASE_URL + '/accounts/me/tenures'
     ).then(
       (response: AxiosResponse<TenureDto>) => {
         const orgRequests = response.data.tenures.map((t) => {
-          return axios.get<OrganizationDto>('http://localhost:8080/organizations/'+t.organizationId)
+          return axios.get<OrganizationDto>(API_BASE_URL + '/organizations/'+t.organizationId)
         })
 
         Promise.all(orgRequests).then((orgResponses: AxiosResponse<OrganizationDto>[]) => {
@@ -182,6 +183,7 @@ export default function AccountsMe() {
       case 'APP':
         return <ApprovalWidget
           style={contentStyle}
+          ehid={profileDto.profile.ehid}
         />
       default:
         return 

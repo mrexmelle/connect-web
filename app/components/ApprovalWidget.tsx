@@ -1,13 +1,14 @@
-import { Button, Col, Form, Input, Layout, List, Modal, Row, DatePicker, TimePicker, Select, Divider } from "antd";
+import { Button, Col, Form, Input, Layout, List, Modal, Row, DatePicker, TimePicker, Select, Divider, notification } from "antd";
 import { ReactNode, useEffect, useState } from "react"
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 import { FormOutlined, SearchOutlined } from "@ant-design/icons";
 import { FieldEntity, TemplateEntity } from "~/models/Entity";
-import { MultipleTemplateDto } from "~/models/Dto";
+import { MultipleTemplateDto, SingleProposalDto } from "~/models/Dto";
 import "~/styles/antd-list.css"
 
 interface Props {
   style: React.CSSProperties
+  ehid: string
 }
 
 const buttonColStyle: React.CSSProperties = {
@@ -18,8 +19,9 @@ const buttonColStyle: React.CSSProperties = {
 }
 
 export default function ({
-  style
+  style, ehid
 }: Props) {
+  const API_BASE_URL = "http://localhost:8082/apms"
   const [form] = Form.useForm()
   const [templates, setTemplates] = useState<TemplateEntity[]>([])
   const [templateListVisible, setTemplateListVisible] = useState<boolean>(false)
@@ -32,7 +34,7 @@ export default function ({
   function fetchTemplates() {
     axios.defaults.withCredentials = true
     axios.get<MultipleTemplateDto>(
-      'http://localhost:8081/templates'
+      API_BASE_URL + '/templates'
     ).then(
       (response: AxiosResponse<MultipleTemplateDto>) => {
         for (var i=0; i<response.data.templates.length; i++) {
@@ -64,9 +66,9 @@ export default function ({
     return (
       <Form.Item
         key={entity.key}
-        name={entity.label}
+        name={entity.key}
         label={entity.label}
-        rules={[{required: entity.required}]}
+        rules={[{required: entity.required, message: "'${label}' cannot be empty"}]}
       >
         {node}
       </Form.Item>
@@ -74,10 +76,49 @@ export default function ({
   }
 
   function postProposal() {
+    var fields = new Map<string, string>()
+    templates[selectedTemplateIndex].fields.map(
+      (obj: FieldEntity) => {
+        if (obj.type == "date") {
+          fields.set(obj.key, form.getFieldValue(obj.key).format("YYYY-MM-DD"))
+        } else if (obj.type == "time") {
+          fields.set(obj.key, form.getFieldValue(obj.key).format("HH:mm"))
+        } else {
+          fields.set(obj.key, form.getFieldValue(obj.key))
+        }
+      }
+    )
+    fields.forEach((value: string, key: string) => {
+      console.log(key + " : " + value)
+    })
     axios.defaults.withCredentials = true
+    axios.post<SingleProposalDto>(
+      API_BASE_URL + '/proposals',
+      {
+        templateCode: templates[selectedTemplateIndex].code,
+        fields: Object.fromEntries(fields)
+      }
+    ).then(
+      (response: AxiosResponse<SingleProposalDto>) => {
+        if(response.data.status === "OK") {
+          notification.success({
+            message: "Proposal submitted successfully"
+          })
+          setTemplateListVisible(false)
+        } else {
+          notification.error({
+            message: "Failed to submit proposal"
+        })
+      }
+    }).catch(
+      (e: AxiosError) => {
+        console.log(e)
+      }
+    )
+
+    console.log("ehid: "+ehid)
   }
         
-
   return (
     <Layout.Content>
       <Row>
@@ -154,22 +195,26 @@ export default function ({
             <Row>
               <Col span={24}>
                 {selectedTemplateIndex == -1 ? <div /> :
-                  <Divider type="horizontal">
-                    {templates[selectedTemplateIndex].description}
-                  </Divider>
+                  <Divider type="horizontal" />
                 }
                 {selectedTemplateIndex == -1 ? <div /> :
                   <Form
                     layout="vertical"
+                    form={form}
                   >
                     {
                       templates[selectedTemplateIndex].fields.map(
-                        (obj) => renderFields(obj)
+                        (obj: FieldEntity) => renderFields(obj)
                       )
                     }
                     <Form.Item>
-                      <Button type="primary" htmlType="submit"
-                        onClick={() => postProposal()}>
+                      <Button
+                        form="form"
+                        key="submit"
+                        htmlType="submit"
+                        type="primary"
+                        onClick={() => postProposal()}
+                      >
                         Submit
                       </Button>
                     </Form.Item>

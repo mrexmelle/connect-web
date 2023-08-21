@@ -1,4 +1,4 @@
-import { OrganizationEntity, OrganizationMemberEntity, OrganizationTreeEntity, ProfileEntity, TemplateEntity, TenureEntity } from "./Entity"
+import { OrganizationEntity, OrganizationMemberEntity, OrganizationTreeEntity, ProfileEntity, ProposalEntity, TemplateEntity, TenureEntity } from "./Entity"
 
 export interface OrganizationDto {
   organization: OrganizationEntity,
@@ -41,5 +41,10 @@ export interface PatchPasswordRequestDto {
 }
 
 export interface PatchPasswordResponseDto {
+  status: string
+}
+
+export interface SingleProposalDto {
+  proposal: ProposalEntity,
   status: string
 }
