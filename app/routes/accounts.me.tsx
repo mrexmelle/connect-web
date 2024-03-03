@@ -1,13 +1,13 @@
-import { ApartmentOutlined, FileDoneOutlined, TeamOutlined, UserOutlined } from "@ant-design/icons";
+import { ApartmentOutlined, FileDoneOutlined, UserOutlined } from "@ant-design/icons";
 import { Layout, Menu, Modal } from "antd";
 import axios, { AxiosError, AxiosResponse } from "axios";
 import OrganizationWidget, { TreeItem } from "~/components/OrganizationWidget";
 import ProfileWidget from "~/components/ProfileWidget";
 import { Key, useEffect, useState } from "react"
-import { OrganizationDto, ProfileDto, TenureDto } from "~/models/Dto";
-import { OrganizationEntity, TenureEntity } from "~/models/Entity";
+import { OrganizationDto, CareerViewModel, ProfileDto, CareerDto, CareerAggregate } from "~/models/Dto";
 import ApprovalWidget from "~/components/ApprovalWidget";
 import { useNavigate } from "@remix-run/react";
+import { OrganizationEntity } from "~/models/Entity";
 
 const contentStyle: React.CSSProperties = {
   margin: '10px',
@@ -44,35 +44,37 @@ const siderItems= [
 ]
 
 export default function AccountsMe() {
-  const API_BASE_URL = "http://localhost:8082/idp"
+  const API_BASE_URL = "http://localhost:8083"
   const [siderCollapsed, setSiderCollapsed] = useState<boolean>(false)
   const [defaultOrganization, setDefaultOrganization] = useState<OrganizationEntity>(
     {
       id: "",
       hierarchy: "",
       name: "",
-      leadEhid: "",
-      emailAddress: ""
+      email_address: ""
     }
   )
   const [lastSelectedOrganizationId, setLastSelectedOrganizationId] = useState<Key>("")
   const [lastTreeContent, setLastTreeContent] = useState<TreeItem[]>([])
   const [selectedMenuItem, selectMenuItem] = useState<string>('MYP')
   const [profileDto, setProfileDto] = useState<ProfileDto>({
-    profile: {
-      name: "",
-      ehid: "",
-      employeeId: "",
-      emailAddress: "",
-      dob: ""
+    data: {
+      ehid:              "",
+      employee_id:       "",
+      name:              "",
+      email_address:     "",
+      dob:               "",
+      grade:             "",
+      title:             "",
+      organization_node: ""
     },
-    status: ""
+    error: {
+      code: "",
+      message: ""
+    }
   })
 
-  const [tenureDto, setTenureDto] = useState<TenureDto>({
-    tenures: [],
-    status: ""
-  })
+  const [careerViewModel, setCareerViewModel] = useState<CareerViewModel[]>([])
   const [modal, modalContextHolder] = Modal.useModal()
   const navigate = useNavigate()
 
@@ -83,7 +85,7 @@ export default function AccountsMe() {
   function fetchProfile() {
     axios.defaults.withCredentials = true
     axios.get<ProfileDto>(
-      API_BASE_URL + '/accounts/me/profile'
+      API_BASE_URL + '/employee-accounts/me/profile'
     ).then(
       (response: AxiosResponse<ProfileDto>) => {
         setProfileDto(response.data)
@@ -109,23 +111,36 @@ export default function AccountsMe() {
 
   function fetchTenures() {
     axios.defaults.withCredentials = true
-    axios.get<TenureDto>(
-      API_BASE_URL + '/accounts/me/tenures'
+    axios.get<CareerDto>(
+      API_BASE_URL + '/employee-accounts/me/career'
     ).then(
-      (response: AxiosResponse<TenureDto>) => {
-        const orgRequests = response.data.tenures.map((t) => {
-          return axios.get<OrganizationDto>(API_BASE_URL + '/organizations/'+t.organizationId)
+      (response: AxiosResponse<CareerDto>) => {
+        const orgRequests = response.data.data.map((c) => {
+          return axios.get<OrganizationDto>(API_BASE_URL + '/organization-nodes/' + c.organization_node)
+        })
+
+        var i = 0
+        var careerVm: CareerViewModel[] = response.data.data.map((c: CareerAggregate) => {
+          return {
+            row_id:              i++,
+            start_date:          c.start_date,
+            end_date:            c.end_date,
+            grade:               c.grade,
+            organization_node:   c.organization_node,
+            title:               c.title,
+            organization_name:   ""
+          }
         })
 
         Promise.all(orgRequests).then((orgResponses: AxiosResponse<OrganizationDto>[]) => {
           orgResponses.map((t, idx) => {
-            response.data.tenures[idx].organizationName = t.data.organization.name
+            careerVm[idx].organization_name = t.data.data.name
           })
-          setTenureDto(response.data)
+          setCareerViewModel(careerVm)
           if (lastSelectedOrganizationId == "") {
-            var idx = getCurrentOrganizationIndex(response.data.tenures)
-            setDefaultOrganization(orgResponses[idx].data.organization)
-            setLastSelectedOrganizationId(orgResponses[idx].data.organization.id)
+            var idx = getCurrentOrganizationIndex(response.data.data)
+            setDefaultOrganization(orgResponses[idx].data.data)
+            setLastSelectedOrganizationId(orgResponses[idx].data.data.id)
           }
         })
       }
@@ -149,12 +164,12 @@ export default function AccountsMe() {
     )
   }
 
-  function getCurrentOrganizationIndex(tenures: TenureEntity[]): number {
+  function getCurrentOrganizationIndex(careers: CareerAggregate[]): number {
     var currentOrgIndex = -1
     var now = new Date()
-    tenures.map((t, i) => {
-      var sdDate = getDateFromString(t.startDate)
-      var edDate = getDateFromString(t.endDate)
+    careers.map((c, i) => {
+      var sdDate = getDateFromString(c.start_date)
+      var edDate = getDateFromString(c.end_date)
       
       if ((sdDate != null && sdDate < now) && (edDate == null || edDate > now)) {
         currentOrgIndex = i
@@ -169,7 +184,7 @@ export default function AccountsMe() {
         return <ProfileWidget
           style={contentStyle}
           profileDto={profileDto}
-          tenureDto={tenureDto}
+          careerVm={careerViewModel}
         />
       case 'ORG':
         return <OrganizationWidget
@@ -183,7 +198,6 @@ export default function AccountsMe() {
       case 'APP':
         return <ApprovalWidget
           style={contentStyle}
-          ehid={profileDto.profile.ehid}
         />
       default:
         return 

@@ -3,44 +3,27 @@ export interface OrganizationEntity {
     id: string,
     hierarchy: string,
     name: string,
-    leadEhid: string,
-    emailAddress: string
+    email_address: string
 }
 
-export interface ProfileEntity {
-    name: string,
-    ehid: string,
-    employeeId: string,
-    emailAddress: string,
-    dob: string
+export interface MembershipViewEntity {
+    id:         number,
+    ehid:       string,
+    start_date: string,
+    end_date:   string,
+    node_id:    string
 }
 
-export interface TenureEntity {
+export interface TreeNodeEntity {
+    data: OrganizationEntity,
+    children: TreeNodeEntity[]
+}
+
+export interface DesignationEntity {
     id: number,
-    employeeId: string,
-    startDate: string,
-    endDate: string,
-    employmentType: string,
-    organizationId: string,
-    titleGrade: string,
-    titleName: string,
-    organizationName: string
-}
-
-export interface OrganizationMemberEntity {
     ehid: string,
-    employeeId: string,
-    name: string,
-    emailAddress: string,
-    titleName: string,
-    isLead: string,
-    employmentType: string,
-    organizationRole: string
-}
-
-export interface OrganizationTreeEntity {
-    organization: OrganizationEntity,
-    children: OrganizationTreeEntity[]
+    node_id: string,
+    role_id: string
 }
 
 export interface FieldEntity {

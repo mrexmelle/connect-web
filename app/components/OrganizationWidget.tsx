@@ -1,9 +1,22 @@
 import { Breadcrumb, Button, Col, Layout, Row, Table, Tree } from "antd";
-import { OrganizationMemberDto, TreeDto } from "~/models/Dto";
 import { Key, ReactNode, useEffect, useState } from "react"
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { HomeOutlined, TeamOutlined } from "@ant-design/icons";
-import { OrganizationEntity, OrganizationMemberEntity, OrganizationTreeEntity } from "~/models/Entity";
+import {
+  OrganizationMemberDto,
+  OrganizationTreeDto,
+  OrganizationMemberViewModel,
+  ProfileDto,
+  OrganizationOfficerDto,
+  OrganizationChildrenDto
+} from "~/models/Dto";
+
+import {
+  DesignationEntity,
+  MembershipViewEntity,
+  OrganizationEntity,
+  TreeNodeEntity
+} from "~/models/Entity";
 
 interface Props {
   style: React.CSSProperties
@@ -35,8 +48,8 @@ export interface TreeItem {
 
 const memberTableColumns = [
   {
-    title: 'Employee ID',
-    dataIndex: 'employeeId'
+    title: 'EHID',
+    dataIndex: 'ehid'
   },
   {
     title: 'Name',
@@ -44,15 +57,11 @@ const memberTableColumns = [
   },
   {
     title: 'Email Address',
-    dataIndex: 'emailAddress'
+    dataIndex: 'email_address'
   },
   {
     title: 'Role',
-    dataIndex: 'organizationRole'
-  },
-  {
-    title: 'Employment Type',
-    dataIndex: 'employmentType'
+    dataIndex: 'role'
   }
 ]
 
@@ -64,7 +73,7 @@ export default function ({
   onSelectedOrganizationIdChange,
   onTreeItemChange
 }: Props) {
-  const API_BASE_URL = "http://localhost:8082/idp"
+  const API_BASE_URL = "http://localhost:8083"
   const [currentOrganizationId, setCurrentOrganizationId] = useState<Key>(lastSelectedOrganizationId)
   const [treeContent, setTreeContent] = useState<TreeItem[]>(lastTreeContent)
 
@@ -73,10 +82,9 @@ export default function ({
     id: "",
     hierarchy: "",
     name: "",
-    leadEhid: "",
-    emailAddress: ""
+    email_address: ""
   })
-  const [teamMembers, setTeamMembers] = useState<OrganizationMemberEntity[]>([])
+  const [memberViewModels, setMemberViewModels] = useState<OrganizationMemberViewModel[]>([])
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([])
   const [selectedKeys, setSelectedKeys] = useState<Key[]>([])
 
@@ -91,46 +99,70 @@ export default function ({
 
   function fetchOrganization() {
     axios.defaults.withCredentials = true
-    axios.get<TreeDto>(
-      API_BASE_URL + '/organizations/'+currentOrganizationId+'/lineage'
+    axios.get<OrganizationTreeDto>(
+      API_BASE_URL + '/organization-nodes/'+currentOrganizationId+'/lineage'
     ).then(
-      (response: AxiosResponse<TreeDto>) => {
-        setOrganizationInformation(response.data.tree)
+      (response: AxiosResponse<OrganizationTreeDto>) => {
+        setOrganizationInformation(response.data.data)
       }
     )
   }
 
   function fetchMember() {
     axios.defaults.withCredentials = true
-    axios.get<OrganizationMemberDto>(
-      API_BASE_URL + '/organizations/'+currentOrganizationId+'/members'
-    ).then(
-      (response: AxiosResponse<OrganizationMemberDto>) => {
-        var data = response.data
-        data.members.forEach((m, i) => {
-          if(m.isLead) {
-            data.members[i].organizationRole = 'Lead'
+    axios.get<OrganizationMemberDto>(API_BASE_URL + '/organization-nodes/'+currentOrganizationId+'/members')
+      .then((memberResponse: AxiosResponse<OrganizationMemberDto>) => {
+        axios.get<OrganizationOfficerDto>(
+          API_BASE_URL +'/organization-nodes/'+currentOrganizationId+'/officers'
+        ).then(
+          (officerResponse: AxiosResponse<OrganizationOfficerDto>) => {
+            const profileRequests = memberResponse.data.data.map((m) => {
+              return axios.get<ProfileDto>(API_BASE_URL + '/employee-accounts/' + m.ehid + '/profile')
+            })
+            var memberVm: OrganizationMemberViewModel[] = memberResponse.data.data.map((m: MembershipViewEntity) => {
+              var d = officerResponse.data.data.find((d: DesignationEntity) => {
+                return m.ehid === d.ehid
+              })
+              var role = ""
+              if (typeof d !== "undefined" && d != null) {
+                role = d.role_id
+              }
+              
+              return {
+                ehid: m.ehid,
+                name: "",
+                email_address: "",
+                role: role
+              }
+            })
+    
+            Promise.all(profileRequests).then((memberResponses: AxiosResponse<ProfileDto>[]) => {
+              memberResponses.map((m, idx) => {
+                memberVm[idx].email_address = m.data.data.email_address
+                memberVm[idx].name = m.data.data.name
+              })
+              memberVm.sort((a,b) => {
+                if (a.role != "") {
+                    return -1
+                } else if (b.role != "") {
+                    return 1
+                  } else {
+                  return a.name < b.name ? -1 : 1
+                  }
+                })
+              setMemberViewModels(memberVm)
+            })
           }
-        })
-        data.members.sort((a,b) => {
-          if (a.isLead) {
-            return -1
-          } else if (b.isLead) {
-            return 1
-          } else {
-          return a.name < b.name ? -1 : 1
-          }
-        })
-        setTeamMembers(data.members)
+        )
       }
     )
   }
 
-  function fillTree(entity: OrganizationTreeEntity): TreeItem {
+  function fillTree(entity: TreeNodeEntity): TreeItem {
     var uiNode: TreeItem = {
       icon: <TeamOutlined />,
-      title: entity.organization.name,
-      key: entity.organization.id,
+      title: entity.data.name,
+      key: entity.data.id,
       isLeaf: false,
       children: new Array<TreeItem>(entity.children.length)
     }
@@ -172,33 +204,33 @@ export default function ({
       return
     }
     axios.defaults.withCredentials = true
-    axios.get<TreeDto>(
-      API_BASE_URL + '/organizations/'+currentOrganizationId+'/siblings-and-ancestral-siblings'
+    axios.get<OrganizationTreeDto>(
+      API_BASE_URL + '/organization-nodes/'+currentOrganizationId+'/lineage-siblings'
     ).then(
-      (response: AxiosResponse<TreeDto>) => {
+      (response: AxiosResponse<OrganizationTreeDto>) => {
         var tc = new Array<TreeItem>(1)
-        tc[0]=fillTree(response.data.tree)
+        tc[0]=fillTree(response.data.data)
         setTreeContent(tc)        
       }
     ).catch(
-      (error: AxiosError<TreeDto>) => {
+      (error: AxiosError<OrganizationTreeDto>) => {
         if (axios.isAxiosError(error) && error.response && error.response.status == 401) {
         }
       }
     )
   }
 
-  function setOrganizationInformation(tree: OrganizationTreeEntity) {
+  function setOrganizationInformation(tree: TreeNodeEntity) {
     var bcItems = []
     var keys = []
     var lastOrganization = organizationEntity
-    var node : OrganizationTreeEntity|null = tree
+    var node : TreeNodeEntity|null = tree
     while(node) {
       bcItems.push({
-        title: node.organization.name
+        title: node.data.name
       })
-      keys.push(node.organization.id)
-      lastOrganization = node.organization
+      keys.push(node.data.id)
+      lastOrganization = node.data
 
       if (node.children.length > 0) {
         node = node.children[0]
@@ -223,20 +255,21 @@ export default function ({
       var node = findNodeByKey(lastKey, treeClone)
       if (node && node.children.length == 0) {
         axios.defaults.withCredentials = true
-        var response = axios.get<TreeDto>(
-          API_BASE_URL + '/organizations/'+lastKey+'/children'
+        var response = axios.get<OrganizationChildrenDto>(
+          API_BASE_URL + '/organization-nodes/'+lastKey+'/children'
         )
-        Promise.all([response]).then((r: AxiosResponse<TreeDto>[]) => {
-          var tree = r[0].data.tree
+        Promise.all([response]).then((r: AxiosResponse<OrganizationChildrenDto>[]) => {
+          var children = r[0].data.data
+          console.log(children)
           if (node) { /* Just to remove node null warning */
-            if (tree.children.length == 0) {
+            if (children.length == 0) {
               node.isLeaf = true
             } else {
-              node.children = tree.children.map((item: OrganizationTreeEntity) => {
+              node.children = children.map((item: OrganizationEntity) => {
                 return {
                   icon: <TeamOutlined />,
-                  title: item.organization.name,
-                  key: item.organization.id,
+                  title: item.name,
+                  key: item.id,
                   isLeaf: false,
                   children: []
                 }
@@ -305,7 +338,7 @@ export default function ({
         </Col>
         <Col span={16} style={{ padding: "5px" }}>
           <h1>{organizationEntity.name}</h1>
-          <p>Email address: {organizationEntity.emailAddress}</p>
+          <p>Email address: {organizationEntity.email_address}</p>
           <Breadcrumb
             items={breadCrumbItems}
             style={{ paddingTop: "10px" }}
@@ -316,7 +349,7 @@ export default function ({
             pagination={false}
             columns={memberTableColumns}
             rowKey="ehid"
-            dataSource={teamMembers} />
+            dataSource={memberViewModels} />
         </Col>
       </Row>
     </Layout.Content>

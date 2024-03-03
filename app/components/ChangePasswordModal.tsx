@@ -1,21 +1,20 @@
 import { Button, Form, Input, Layout, Modal, notification } from "antd";
-import { RuleObject } from "antd/es/form";
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { ChangeEvent, Dispatch, SetStateAction, useState } from "react";
-import { PatchPasswordRequestDto, PatchPasswordResponseDto } from "~/models/Dto";
+import { PatchPasswordResponseDto } from "~/models/Dto";
 
 interface Props {
   isVisible: boolean,
-  isVisibleDispatcher?: Dispatch<SetStateAction<boolean>>
+  isVisibleDispatcher?: Dispatch<SetStateAction<boolean>>,
+  employeeId: string
 }
 
-export default function ({isVisible, isVisibleDispatcher}: Props) {
-  const API_BASE_URL = "http://localhost:8082/idp"
+export default function ({isVisible, isVisibleDispatcher, employeeId}: Props) {
+  const API_BASE_URL = "http://localhost:8083"
   const [form] = Form.useForm();
   const [currentPassword, setCurrentPassword] = useState<string>("")
   const [newPassword, setNewPassword] = useState<string>("")
   const [newPasswordConfirmation, setNewPasswordConfirmation] = useState<string>("")
-  const [buttonDisabled, setButtonDisabled] = useState<boolean>(true)
 
   function onCurrentPasswordChange(e: ChangeEvent<HTMLInputElement>) {
     setCurrentPassword(e.target.value)
@@ -67,10 +66,10 @@ export default function ({isVisible, isVisibleDispatcher}: Props) {
 
     axios.defaults.withCredentials = true
     axios.patch<PatchPasswordResponseDto>(
-      API_BASE_URL + '/accounts/me/password',
+      API_BASE_URL + '/authx-credentials/' + employeeId + '/password',
       {
-        currentPassword: currentPassword,
-        newPassword: newPassword
+        current_password: currentPassword,
+        new_password: newPassword
       }
     ).then(
       (_: AxiosResponse<PatchPasswordResponseDto>) => {
