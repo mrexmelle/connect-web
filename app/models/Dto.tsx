@@ -1,28 +1,86 @@
-import { OrganizationEntity, OrganizationMemberEntity, OrganizationTreeEntity, ProfileEntity, ProposalEntity, TemplateEntity, TenureEntity } from "./Entity"
+import {
+  DesignationEntity,
+  MembershipViewEntity,
+  OrganizationEntity,
+  ProposalEntity,
+  TemplateEntity,
+  TreeNodeEntity
+} from "./Entity"
 
-export interface OrganizationDto {
-  organization: OrganizationEntity,
-  status: string
+export interface ServiceError {
+  code: string,
+  message: string
+}
+
+export interface ProfileAggregate {
+  ehid:              string,
+	employee_id:       string,
+	name:              string,
+	email_address:     string,
+	dob:               string,
+	grade:             string,
+	title:             string,
+	organization_node: string
+}
+
+export interface CareerAggregate {
+  start_date:          string,
+	end_date:            string,
+	grade:               string,
+	organization_node:   string,
+	title:               string
 }
 
 export interface ProfileDto {
-  profile: ProfileEntity,
-  status: string
+  data: ProfileAggregate,
+  error: ServiceError
 }
 
-export interface TenureDto {
-  tenures: TenureEntity[],
-  status: string
+export interface CareerDto {
+  data: CareerAggregate[],
+  error: ServiceError
+}
+
+export interface OrganizationDto {
+  data: OrganizationEntity,
+  error: ServiceError
+}
+
+export interface CareerViewModel {
+  row_id:              number,
+  start_date:          string,
+	end_date:            string,
+	grade:               string,
+	organization_node:   string,
+	title:               string,
+  organization_name:   string
 }
 
 export interface OrganizationMemberDto {
-  members: OrganizationMemberEntity[],
-  status: string
+  data: MembershipViewEntity[],
+  error: ServiceError
 }
 
-export interface TreeDto {
-  tree: OrganizationTreeEntity,
-  status: string
+export interface OrganizationMemberViewModel {
+  ehid: string,
+  name: string,
+  email_address: string,
+  role: string
+}
+
+export interface OrganizationChildrenDto {
+  data: OrganizationEntity[],
+  error: ServiceError
+}
+
+export interface OrganizationTreeDto {
+  data: TreeNodeEntity,
+  error: ServiceError
+}
+
+export interface OrganizationOfficerDto {
+  data: DesignationEntity[],
+  error: ServiceError
 }
 
 export interface MultipleTemplateDto {

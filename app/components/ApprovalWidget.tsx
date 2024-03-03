@@ -8,7 +8,6 @@ import "~/styles/antd-list.css"
 
 interface Props {
   style: React.CSSProperties
-  ehid: string
 }
 
 const buttonColStyle: React.CSSProperties = {
@@ -18,9 +17,7 @@ const buttonColStyle: React.CSSProperties = {
   padding: '5px'
 }
 
-export default function ({
-  style, ehid
-}: Props) {
+export default function ({ style }: Props) {
   const API_BASE_URL = "http://localhost:8082/apms"
   const [form] = Form.useForm()
   const [templates, setTemplates] = useState<TemplateEntity[]>([])

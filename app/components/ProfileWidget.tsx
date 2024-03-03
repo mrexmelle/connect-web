@@ -1,12 +1,12 @@
-import { Button, Form, Input, Row, Col, Layout, Divider, Table, Modal } from "antd";
+import { Button, Row, Col, Layout, Divider, Table } from "antd";
 import { useState } from "react";
-import { ProfileDto, TenureDto } from "~/models/Dto";
+import { ProfileDto, CareerViewModel } from "~/models/Dto";
 import ChangePasswordModal from "./ChangePasswordModal";
 
 interface Props {
   style: React.CSSProperties,
   profileDto: ProfileDto,
-  tenureDto: TenureDto
+  careerVm: CareerViewModel[]
 }
 
 const profileTableColumns = [
@@ -20,11 +20,11 @@ const profileTableColumns = [
   },
   {
     title: 'Employee ID',
-    dataIndex: 'employeeId'
+    dataIndex: 'employee_id'
   },
   {
     title: 'Email Address',
-    dataIndex: 'emailAddress'
+    dataIndex: 'email_address'
   },
   {
     title: 'Date of Birth',
@@ -32,34 +32,30 @@ const profileTableColumns = [
   }
 ]
 
-const tenureTableColumns = [
+const careerTableColumns = [
   {
     title: 'Start Date',
-    dataIndex: 'startDate'
+    dataIndex: 'start_date'
   },
   {
     title: 'End Date',
-    dataIndex: 'endDate'
-  },
-  {
-    title: 'Employment Type',
-    dataIndex: 'employmentType'
+    dataIndex: 'end_date'
   },
   {
     title: 'Organization',
-    dataIndex: 'organizationName'
+    dataIndex: 'organization_name'
   },
   {
     title: 'Title',
-    dataIndex: 'titleName'
+    dataIndex: 'title'
   },
   {
     title: 'Grade',
-    dataIndex: 'titleGrade'
+    dataIndex: 'grade'
   }
 ]
 
-export default function ({style, profileDto, tenureDto}: Props) {
+export default function ({style, profileDto, careerVm}: Props) {
   const [changePasswordModalVisible, setChangePasswordModalVisible] = useState<boolean>(false)
 
   return (
@@ -71,18 +67,18 @@ export default function ({style, profileDto, tenureDto}: Props) {
             pagination={false}
             columns={profileTableColumns}
             rowKey="ehid"
-            dataSource={[profileDto.profile]} />
+            dataSource={[profileDto.data]} />
         </Col>
       </Row>
       <Divider />
       <Row>
         <Col span={24} style={{ padding: "5px" }}>
-          <h1>Tenures</h1>
+          <h1>Career</h1>
           <Table
             pagination={false}
-            columns={tenureTableColumns}
-            rowKey="id"
-            dataSource={tenureDto.tenures} />
+            columns={careerTableColumns}
+            rowKey="row_id"
+            dataSource={careerVm} />
         </Col>
       </Row>
       <Divider />
@@ -96,6 +92,7 @@ export default function ({style, profileDto, tenureDto}: Props) {
         </Col>
       </Row>
       <ChangePasswordModal
+        employeeId={profileDto.data.employee_id}
         isVisible={changePasswordModalVisible}
         isVisibleDispatcher={setChangePasswordModalVisible}  />
     </Layout.Content>

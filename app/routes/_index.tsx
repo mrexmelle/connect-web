@@ -32,7 +32,7 @@ const rowStyle: React.CSSProperties = {
 }
 
 export default function Index() {
-  const API_BASE_URL = "http://localhost:8082/idp"
+  const API_BASE_URL = "http://localhost:8083"
   const [employeeId, setEmployeeId] = useState<string>("")
   const [password, setPassword] = useState<string>("")
   const [modal, modalContextHolder] = Modal.useModal()
@@ -56,9 +56,9 @@ export default function Index() {
     }
     axios.defaults.withCredentials = true
     axios.post(
-      API_BASE_URL + '/sessions',
+      API_BASE_URL + '/authx-sessions',
       {
-        employeeId: employeeId,
+        employee_id: employeeId,
         password: password
       }
     ).then(
