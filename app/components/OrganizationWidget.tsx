@@ -48,10 +48,6 @@ export interface TreeItem {
 
 const memberTableColumns = [
   {
-    title: 'EHID',
-    dataIndex: 'ehid'
-  },
-  {
     title: 'Name',
     dataIndex: 'name'
   },
@@ -73,7 +69,7 @@ export default function ({
   onSelectedOrganizationIdChange,
   onTreeItemChange
 }: Props) {
-  const API_BASE_URL = "http://localhost:8083"
+  const API_BASE_URL = "http://localhost:8079"
   const [currentOrganizationId, setCurrentOrganizationId] = useState<Key>(lastSelectedOrganizationId)
   const [treeContent, setTreeContent] = useState<TreeItem[]>(lastTreeContent)
 

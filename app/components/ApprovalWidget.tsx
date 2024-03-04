@@ -112,8 +112,6 @@ export default function ({ style }: Props) {
         console.log(e)
       }
     )
-
-    console.log("ehid: "+ehid)
   }
         
   return (
