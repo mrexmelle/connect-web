@@ -44,7 +44,7 @@ const siderItems= [
 ]
 
 export default function AccountsMe() {
-  const API_BASE_URL = "http://localhost:8083"
+  const API_BASE_URL = "http://localhost:8079"
   const [siderCollapsed, setSiderCollapsed] = useState<boolean>(false)
   const [defaultOrganization, setDefaultOrganization] = useState<OrganizationEntity>(
     {
